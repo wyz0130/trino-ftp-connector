@@ -1,57 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>io.airlift</groupId>
-        <artifactId>airbase</artifactId>
-        <version>147</version>
-    </parent>
-
     <groupId>org.ebyhr</groupId>
-    <artifactId>trino-storage</artifactId>
-    <version>434-SNAPSHOT</version>
-    <packaging>trino-plugin</packaging>
-    <description>Trino - Storage Connector</description>
-
-    <licenses>
-        <license>
-            <name>Apache License 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <scm>
-        <developerConnection>scm:git:https://github.com/snowlift/trino-storage.git</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>Trino Storage connector</name>
-            <url>https://maven.pkg.github.com/snowlift/trino-storage</url>
-        </repository>
-    </distributionManagement>
+    <artifactId>trino-ftp</artifactId>
+    <version>422</version>
+    <name>trinoftp</name>
+    <description>Trino-ftp Connector</description>
 
     <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.targetJdk>17</project.build.targetJdk>
-        <air.java.version>17.0.6</air.java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <air.check.skip-extended>true</air.check.skip-extended>
-        <air.check.skip-license>false</air.check.skip-license>
 
-        <air.check.fail-checkstyle>true</air.check.fail-checkstyle>
-        <air.check.skip-checkstyle>false</air.check.skip-checkstyle>
-
-        <dep.trino.version>433</dep.trino.version>
+        <dep.trino.version>422</dep.trino.version>
         <dep.airlift.version>237</dep.airlift.version>
         <dep.slice.version>2.2</dep.slice.version>
         <dep.opentelemetry.version>1.31.0</dep.opentelemetry.version>
         <dep.opentelemetry-instrumentation.version>1.31.0</dep.opentelemetry-instrumentation.version>
-        <dep.packaging.version>${dep.airlift.version}</dep.packaging.version>
-        <dep.aws-sdk.version>1.12.587</dep.aws-sdk.version>
+
+        <dep.aws-sdk.version>1.12.581</dep.aws-sdk.version>
         <dep.guava.version>32.1.3-jre</dep.guava.version>
         <dep.guice.version>7.0.0</dep.guice.version>
         <dep.errorprone.version>2.23.0</dep.errorprone.version>
@@ -65,8 +37,6 @@
         <dep.assertj-core.version>3.24.2</dep.assertj-core.version>
         <dep.logback.version>1.4.11</dep.logback.version>
         <dep.plugin.surefire.version>3.1.2</dep.plugin.surefire.version>
-
-        <project.scm.id>github</project.scm.id>
     </properties>
 
     <dependencyManagement>
@@ -107,7 +77,6 @@
     </dependencyManagement>
 
     <dependencies>
-
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
@@ -405,155 +374,51 @@
     </dependencies>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.5.1</version>
-                </plugin>
-                <plugin>
-                    <groupId>ca.vanzyl.provisio.maven.plugins</groupId>
-                    <artifactId>provisio-maven-plugin</artifactId>
-                    <version>1.0.20</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.basepom.maven</groupId>
-                    <artifactId>duplicate-finder-maven-plugin</artifactId>
-                    <configuration>
-                        <exceptions combine.children="append">
-                            <exception>
-                                <conflictingDependencies>
-                                    <dependency>
-                                        <groupId>com.google.cloud.bigdataoss</groupId>
-                                        <artifactId>gcs-connector</artifactId>
-                                    </dependency>
-                                    <dependency>
-                                        <groupId>org.apache.httpcomponents</groupId>
-                                        <artifactId>httpclient</artifactId>
-                                    </dependency>
-                                </conflictingDependencies>
-                                <resources>
-                                    <resource>mozilla/public-suffix-list.txt</resource>
-                                </resources>
-                            </exception>
-                        </exceptions>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.1.1</version>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
-            <plugin>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>3.0.1</version>
-                <configuration>
-                    <scmCommentPrefix>[ci skip]</scmCommentPrefix>
-                    <tagNameFormat>v@{project.version}</tagNameFormat>
-                    <pushChanges>true</pushChanges>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-scm-plugin</artifactId>
-                <version>2.0.1</version>
-                <configuration>
-                    <pushChanges>true</pushChanges>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>io.trino</groupId>
-                <artifactId>trino-maven-plugin</artifactId>
-                <version>12</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <pluginClassName>io.trino.spi.Plugin</pluginClassName>
-                    <spiGroupId>io.trino</spiGroupId>
-                    <spiArtifactId>trino-spi</spiArtifactId>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>ca.vanzyl.provisio.maven.plugins</groupId>
-                <artifactId>provisio-maven-plugin</artifactId>
-                <extensions>true</extensions>
-            </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration combine.children="append">
-                    <compilerArgs>
-                        <arg>-XDcompilePolicy=simple</arg>
-                        <arg>-Xplugin:ErrorProne</arg>
-                    </compilerArgs>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>com.google.errorprone</groupId>
-                            <artifactId>error_prone_core</artifactId>
-                            <version>${dep.errorprone.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                    <fork>false</fork>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <configuration>
-                    <rules>
-                        <requireUpperBoundDeps>
-                            <excludes combine.children="append">
-                                <!-- TODO: fix this in Airlift resolver -->
-                                <exclude>org.codehaus.plexus:plexus-utils</exclude>
-                            </excludes>
-                        </requireUpperBoundDeps>
-                    </rules>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>com.github.ferstl</groupId>
-                        <artifactId>pedantic-pom-enforcers</artifactId>
-                        <version>2.2.0</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <includes>
-                        <include>**/Test*.java</include>
-                    </includes>
-                </configuration>
-                <dependencies>
-                    <!-- allow both JUnit and TestNG -->
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junit-platform</artifactId>
-                        <version>${dep.plugin.surefire.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-testng</artifactId>
-                        <version>${dep.plugin.surefire.version}</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.junit.jupiter</groupId>
-                        <artifactId>junit-jupiter-engine</artifactId>
-                        <version>${dep.junit.version}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
         </plugins>
     </build>
+
+
 </project>
