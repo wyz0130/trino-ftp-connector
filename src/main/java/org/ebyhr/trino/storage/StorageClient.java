@@ -91,6 +91,7 @@ public class StorageClient
         FilePlugin plugin = PluginFactory.create(schema);
         try {
             List<StorageColumnHandle> columns = plugin.getFields(tableName, path -> getInputStream(session, path));
+            log.info("columns :"+columns.toString());
             return new StorageTable(StorageSplit.Mode.TABLE, tableName, columns);
         }
         catch (Exception e) {

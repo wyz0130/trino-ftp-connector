@@ -71,4 +71,10 @@ public class StorageTable
     {
         return columnsMetadata;
     }
+
+    @Override
+    public String toString()
+    {
+        return "StorageTable{" + "mode=" + mode + ", name='" + name + '\'' + ", columns=" + columns + ", columnsMetadata=" + columnsMetadata + '}';
+    }
 }

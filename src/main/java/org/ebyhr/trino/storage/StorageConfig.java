@@ -21,9 +21,35 @@ public class StorageConfig
 {
     private boolean allowLocalFiles = true;
 
+
+    private String ftpHost = "192.168.31.129";
+    private String ftpUser = "root";
+    private String ftpPassWord = "root";
+    private String ftpPort = "21";
+
     public boolean getAllowLocalFiles()
     {
         return allowLocalFiles;
+    }
+
+    public String getFtpHost()
+    {
+        return ftpHost;
+    }
+
+    public String getFtpUser()
+    {
+        return ftpUser;
+    }
+
+    public String getFtpPassWord()
+    {
+        return ftpPassWord;
+    }
+
+    public String getFtpPort()
+    {
+        return ftpPort;
     }
 
     @Config("allow-local-files")
@@ -33,4 +59,31 @@ public class StorageConfig
         this.allowLocalFiles = allowLocalFiles;
         return this;
     }
+
+
+    @Config("ftp_host")
+    public void setFtpHost(String ftpHost)
+    {
+        this.ftpHost = ftpHost;
+    }
+
+    @Config("ftp_port")
+    public void setFtpPort(String ftpPort)
+    {
+        this.ftpPort = ftpPort;
+    }
+
+    @Config("ftp_user")
+    public void setFtpUser(String ftpUser)
+    {
+        this.ftpUser = ftpUser;
+    }
+
+    @Config("ftp_password")
+    public void setFtpPassWord(String ftpPassWord)
+    {
+        this.ftpPassWord = ftpPassWord;
+    }
+
+
 }

@@ -15,21 +15,29 @@ package org.ebyhr.trino.storage;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import io.airlift.log.Logger;
+import io.airlift.slice.Slice;
 import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.connector.ColumnMetadata;
+import io.trino.spi.connector.ConnectorInsertTableHandle;
 import io.trino.spi.connector.ConnectorMetadata;
+import io.trino.spi.connector.ConnectorOutputMetadata;
 import io.trino.spi.connector.ConnectorSession;
 import io.trino.spi.connector.ConnectorTableHandle;
 import io.trino.spi.connector.ConnectorTableMetadata;
+import io.trino.spi.connector.RetryMode;
 import io.trino.spi.connector.SchemaTableName;
 import io.trino.spi.connector.SchemaTablePrefix;
 import io.trino.spi.connector.TableColumnsMetadata;
 import io.trino.spi.connector.TableFunctionApplicationResult;
 import io.trino.spi.connector.TableNotFoundException;
 import io.trino.spi.function.table.ConnectorTableFunctionHandle;
+import io.trino.spi.statistics.ComputedStatistics;
 import org.ebyhr.trino.storage.ptf.ListTableFunction.QueryFunctionHandle;
 import org.ebyhr.trino.storage.ptf.ReadFileTableFunction.ReadFunctionHandle;
 
+import java.awt.desktop.PrintFilesEvent;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +50,13 @@ import static org.ebyhr.trino.storage.ptf.ListTableFunction.COLUMNS_METADATA;
 import static org.ebyhr.trino.storage.ptf.ListTableFunction.COLUMN_HANDLES;
 import static org.ebyhr.trino.storage.ptf.ListTableFunction.LIST_SCHEMA_NAME;
 
-public class StorageMetadata
-        implements ConnectorMetadata
+public class StorageMetadata implements ConnectorMetadata
 {
     private final StorageClient storageClient;
+
+    private StorageTable storageTable;
+
+    private static final Logger log = Logger.get(StorageMetadata.class);
 
     @Inject
     public StorageMetadata(StorageClient storageClient)
@@ -67,11 +78,15 @@ public class StorageMetadata
     @Override
     public StorageTableHandle getTableHandle(ConnectorSession session, SchemaTableName tableName)
     {
+        log.info("getTableHandle :");
         if (!listSchemaNames(session).contains(tableName.getSchemaName())) {
             return null;
         }
 
         StorageTable table = storageClient.getTable(session, tableName.getSchemaName(), tableName.getTableName());
+        this.storageTable =table;
+
+        log.info("getTableHandle : table :  " + table.toString());
         if (table == null) {
             return null;
         }
@@ -82,8 +97,10 @@ public class StorageMetadata
     @Override
     public ConnectorTableMetadata getTableMetadata(ConnectorSession session, ConnectorTableHandle table)
     {
+        log.info("getTableMetadata :");
         StorageTableHandle storageTableHandle = (StorageTableHandle) table;
-        RemoteTableName tableName = new RemoteTableName(storageTableHandle.getSchemaName(), storageTableHandle.getTableName());
+        RemoteTableName tableName = new RemoteTableName(storageTableHandle.getSchemaName(),
+                storageTableHandle.getTableName());
 
         return getStorageTableMetadata(session, tableName);
     }
@@ -91,18 +108,19 @@ public class StorageMetadata
     @Override
     public List<SchemaTableName> listTables(ConnectorSession session, Optional<String> schemaNameOrNull)
     {
-        SchemaTablePrefix prefix = schemaNameOrNull
-                .map(SchemaTablePrefix::new)
-                .orElseGet(SchemaTablePrefix::new);
+        log.info("listTables :");
+        SchemaTablePrefix prefix = schemaNameOrNull.map(SchemaTablePrefix::new).orElseGet(SchemaTablePrefix::new);
         return listTables(prefix).map(RemoteTableName::toSchemaTableName).collect(toImmutableList());
     }
 
     @Override
     public Map<String, ColumnHandle> getColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle)
     {
+        log.info("getColumnHandles :");
         StorageTableHandle storageTableHandle = (StorageTableHandle) tableHandle;
 
-        StorageTable table = storageClient.getTable(session, storageTableHandle.getSchemaName(), storageTableHandle.getTableName());
+        StorageTable table = storageClient.getTable(session, storageTableHandle.getSchemaName(),
+                storageTableHandle.getTableName());
         if (table == null) {
             throw new TableNotFoundException(storageTableHandle.toSchemaTableName());
         }
@@ -115,8 +133,10 @@ public class StorageMetadata
     }
 
     @Override
-    public Map<SchemaTableName, List<ColumnMetadata>> listTableColumns(ConnectorSession session, SchemaTablePrefix prefix)
+    public Map<SchemaTableName, List<ColumnMetadata>> listTableColumns(ConnectorSession session,
+                                                                       SchemaTablePrefix prefix)
     {
+        log.info("listTableColumns :");
         requireNonNull(prefix, "prefix is null");
         ImmutableMap.Builder<SchemaTableName, List<ColumnMetadata>> columns = ImmutableMap.builder();
         for (RemoteTableName tableName : listTables(prefix).toList()) {
@@ -132,17 +152,15 @@ public class StorageMetadata
     @Override
     public Iterator<TableColumnsMetadata> streamTableColumns(ConnectorSession session, SchemaTablePrefix prefix)
     {
+        log.info("streamTableColumns :");
         requireNonNull(prefix, "prefix is null");
-        return listTables(prefix)
-                .map(table -> TableColumnsMetadata.forTable(
-                        table.toSchemaTableName(),
-                        requireNonNull(getStorageTableMetadata(session, table), "tableMetadata is null")
-                                .getColumns()))
-                .iterator();
+        return listTables(prefix).map(table -> TableColumnsMetadata.forTable(table.toSchemaTableName(),
+                requireNonNull(getStorageTableMetadata(session, table), "tableMetadata is null").getColumns())).iterator();
     }
 
     private ConnectorTableMetadata getStorageTableMetadata(ConnectorSession session, RemoteTableName tableName)
     {
+        log.info("getStorageTableMetadata :");
         if (tableName.schemaName().equals(LIST_SCHEMA_NAME)) {
             return new ConnectorTableMetadata(tableName.toSchemaTableName(), COLUMNS_METADATA);
         }
@@ -161,37 +179,37 @@ public class StorageMetadata
 
     private Stream<RemoteTableName> listTables(SchemaTablePrefix prefix)
     {
+        log.info("listTables :");
         if (prefix.getSchema().isPresent() && prefix.getTable().isPresent()) {
             return Stream.of(new RemoteTableName(prefix.getSchema().get(), prefix.getTable().get()));
         }
 
-        List<String> schemaNames = prefix.getSchema()
-                .map(List::of)
-                .orElseGet(storageClient::getSchemaNames);
+        List<String> schemaNames = prefix.getSchema().map(List::of).orElseGet(storageClient::getSchemaNames);
 
-        return schemaNames.stream()
-                .flatMap(schemaName -> storageClient.getTableNames(schemaName).stream()
-                        .map(tableName -> new RemoteTableName(LIST_SCHEMA_NAME, LIST_SCHEMA_NAME)));
+        return schemaNames.stream().flatMap(schemaName -> storageClient.getTableNames(schemaName).stream().map(tableName -> new RemoteTableName(LIST_SCHEMA_NAME, LIST_SCHEMA_NAME)));
     }
 
     @Override
-    public ColumnMetadata getColumnMetadata(ConnectorSession session, ConnectorTableHandle tableHandle, ColumnHandle columnHandle)
+    public ColumnMetadata getColumnMetadata(ConnectorSession session, ConnectorTableHandle tableHandle,
+                                            ColumnHandle columnHandle)
     {
+        log.info("getColumnMetadata :");
         return ((StorageColumnHandle) columnHandle).getColumnMetadata();
     }
 
     @Override
-    public Optional<TableFunctionApplicationResult<ConnectorTableHandle>> applyTableFunction(ConnectorSession session, ConnectorTableFunctionHandle handle)
+    public Optional<TableFunctionApplicationResult<ConnectorTableHandle>> applyTableFunction(ConnectorSession session
+            , ConnectorTableFunctionHandle handle)
     {
+        log.info("applyTableFunction :");
         if (handle instanceof ReadFunctionHandle catFunctionHandle) {
-            return Optional.of(new TableFunctionApplicationResult<>(
-                    catFunctionHandle.getTableHandle(),
-                    catFunctionHandle.getColumns().stream()
-                            .map(column -> new StorageColumnHandle(column.getName(), column.getType()))
-                            .collect(toImmutableList())));
+            return Optional.of(new TableFunctionApplicationResult<>(catFunctionHandle.getTableHandle(),
+                    catFunctionHandle.getColumns().stream().map(column -> new StorageColumnHandle(column.getName(),
+                            column.getType())).collect(toImmutableList())));
         }
         if (handle instanceof QueryFunctionHandle queryFunctionHandle) {
-            return Optional.of(new TableFunctionApplicationResult<>(queryFunctionHandle.getTableHandle(), COLUMN_HANDLES));
+            return Optional.of(new TableFunctionApplicationResult<>(queryFunctionHandle.getTableHandle(),
+                    COLUMN_HANDLES));
         }
         return Optional.empty();
     }
@@ -205,5 +223,24 @@ public class StorageMetadata
         {
             return new SchemaTableName(schemaName(), tableName());
         }
+    }
+
+
+    @Override
+    public ConnectorInsertTableHandle beginInsert(ConnectorSession session, ConnectorTableHandle tableHandle,
+                                                  List<ColumnHandle> columns, RetryMode retryMode)
+    {
+
+        StorageTableHandle storageTableHandle=(StorageTableHandle)tableHandle;
+        return new StorageInsertTableHandle(storageTableHandle,storageTable);
+    }
+
+    @Override
+    public Optional<ConnectorOutputMetadata> finishInsert(ConnectorSession session,
+                                                          ConnectorInsertTableHandle insertHandle,
+                                                          Collection<Slice> fragments,
+                                                          Collection<ComputedStatistics> computedStatistics)
+    {
+        return Optional.empty();
     }
 }

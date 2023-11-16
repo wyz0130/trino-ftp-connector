@@ -19,6 +19,7 @@ import io.airlift.bootstrap.LifeCycleManager;
 import io.airlift.log.Logger;
 import io.trino.spi.connector.Connector;
 import io.trino.spi.connector.ConnectorMetadata;
+import io.trino.spi.connector.ConnectorPageSinkProvider;
 import io.trino.spi.connector.ConnectorPageSourceProvider;
 import io.trino.spi.connector.ConnectorSplitManager;
 import io.trino.spi.connector.ConnectorTransactionHandle;
@@ -39,6 +40,7 @@ public class StorageConnector
     private final StorageMetadata metadata;
     private final StorageSplitManager splitManager;
     private final StoragePageSourceProvider pageSourceProvider;
+    private final StoragePageSinkProvider pageSinkProvider;
     private final Set<ConnectorTableFunction> connectorTableFunctions;
 
     @Inject
@@ -47,12 +49,14 @@ public class StorageConnector
             StorageMetadata metadata,
             StorageSplitManager splitManager,
             StoragePageSourceProvider pageSourceProvider,
+            StoragePageSinkProvider pageSinkProvider,
             Set<ConnectorTableFunction> connectorTableFunctions)
     {
         this.lifeCycleManager = requireNonNull(lifeCycleManager, "lifeCycleManager is null");
         this.metadata = requireNonNull(metadata, "metadata is null");
         this.splitManager = requireNonNull(splitManager, "splitManager is null");
         this.pageSourceProvider = requireNonNull(pageSourceProvider, "pageSourceProvider is null");
+        this.pageSinkProvider = requireNonNull(pageSinkProvider, "pageSourceProvider is null");
         this.connectorTableFunctions = ImmutableSet.copyOf(requireNonNull(connectorTableFunctions, "connectorTableFunctions is null"));
     }
 
@@ -78,6 +82,12 @@ public class StorageConnector
     public ConnectorPageSourceProvider getPageSourceProvider()
     {
         return pageSourceProvider;
+    }
+
+    @Override
+    public ConnectorPageSinkProvider getPageSinkProvider()
+    {
+        return pageSinkProvider;
     }
 
     @Override

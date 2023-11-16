@@ -17,12 +17,15 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
+import io.airlift.log.Logger;
 import org.ebyhr.trino.storage.StorageColumnHandle;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.security.Key;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -33,6 +36,8 @@ import static io.trino.spi.type.VarcharType.VARCHAR;
 public class CsvPlugin
         implements FilePlugin
 {
+    private static final Logger log = Logger.get(CsvPlugin.class);
+
     private final CsvMapper mapper;
     private final CsvSchema schema;
 
@@ -47,9 +52,12 @@ public class CsvPlugin
     public List<StorageColumnHandle> getFields(String path, Function<String, InputStream> streamProvider)
     {
         try {
+            log.info("getFields: Csv :"+path +"  streamProvider:"+streamProvider.toString());
             // Read the first line and use the values as column names
             MappingIterator<List<String>> it = this.mapper.readerFor(List.class).with(schema).readValues(streamProvider.apply(path));
             List<String> fields = it.next();
+            ImmutableList<StorageColumnHandle> collect = fields.stream().map(field -> new StorageColumnHandle(field, VARCHAR)).collect(toImmutableList());
+            log.info("collect :"+collect.toString());
             return fields.stream()
                     .map(field -> new StorageColumnHandle(field, VARCHAR))
                     .collect(toImmutableList());
@@ -63,6 +71,7 @@ public class CsvPlugin
     public Stream<List<?>> getRecordsIterator(String path, Function<String, InputStream> streamProvider)
     {
         try {
+            log.info("getRecordsIterator: Csv :"+path +"  streamProvider:"+streamProvider.toString());
             // Read lines and skip the first one because that contains the column names
             MappingIterator<List<?>> it = this.mapper.readerFor(List.class).with(schema).readValues(streamProvider.apply(path));
             return Streams.stream(it).skip(1);

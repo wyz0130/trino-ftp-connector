@@ -40,6 +40,8 @@ public final class PluginFactory
                 return new OrcPlugin();
             case "json":
                 return new JsonPlugin();
+            case "ftp":
+                return new FtpPlugin();
             default:
                 throw new SchemaNotFoundException(typeName);
         }

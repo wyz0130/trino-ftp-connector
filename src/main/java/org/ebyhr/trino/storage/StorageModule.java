@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import io.airlift.http.client.HttpClientConfig;
+import io.airlift.log.Logger;
 import io.opentelemetry.api.OpenTelemetry;
 import io.trino.filesystem.TrinoFileSystemFactory;
 import io.trino.filesystem.hdfs.HdfsFileSystemFactory;
@@ -39,19 +40,21 @@ import static io.airlift.json.JsonCodec.listJsonCodec;
 import static io.airlift.json.JsonCodecBinder.jsonCodecBinder;
 import static java.util.Objects.requireNonNull;
 
-public class StorageModule
-        implements Module
+public class StorageModule implements Module
 {
+    private static final Logger log = Logger.get(StoragePlugin.class);
     private final TypeManager typeManager;
 
     public StorageModule(TypeManager typeManager)
     {
+
         this.typeManager = requireNonNull(typeManager, "typeManager is null");
     }
 
     @Override
     public void configure(Binder binder)
     {
+
         binder.bind(TypeManager.class).toInstance(typeManager);
 
         binder.bind(StorageConnector.class).in(Scopes.SINGLETON);
@@ -60,22 +63,23 @@ public class StorageModule
         binder.bind(StorageSplitManager.class).in(Scopes.SINGLETON);
         binder.bind(StorageRecordSetProvider.class).in(Scopes.SINGLETON);
         binder.bind(StoragePageSourceProvider.class).in(Scopes.SINGLETON);
+        binder.bind(StoragePageSinkProvider.class).in(Scopes.SINGLETON);
+
         newSetBinder(binder, ConnectorTableFunction.class).addBinding().toProvider(ReadFileTableFunction.class).in(Scopes.SINGLETON);
         newSetBinder(binder, ConnectorTableFunction.class).addBinding().toProvider(ListTableFunction.class).in(Scopes.SINGLETON);
         binder.bind(TrinoFileSystemFactory.class).to(HdfsFileSystemFactory.class).in(Scopes.SINGLETON);
         binder.bind(TrinoHdfsFileSystemStats.class).in(Scopes.SINGLETON);
         binder.bind(OpenTelemetry.class).toInstance(OpenTelemetry.noop());
         configBinder(binder).bindConfig(StorageConfig.class);
-
         jsonBinder(binder).addDeserializerBinding(Type.class).to(TypeDeserializer.class);
         jsonCodecBinder(binder).bindMapJsonCodec(String.class, listJsonCodec(StorageTable.class));
-
         configBinder(binder).bindConfig(HttpClientConfig.class, ForStorage.class);
         httpClientBinder(binder).bindHttpClient("storage", ForStorage.class);
+
+
     }
 
-    public static final class TypeDeserializer
-            extends FromStringDeserializer<Type>
+    public static final class TypeDeserializer extends FromStringDeserializer<Type>
     {
         private final TypeManager typeManager;
 
