@@ -54,10 +54,9 @@ public class StorageConfig
 
     @Config("allow-local-files")
     @ConfigDescription("If true, allow reading local files")
-    public StorageConfig setAllowLocalFiles(boolean allowLocalFiles)
+    public void setAllowLocalFiles(boolean allowLocalFiles)
     {
         this.allowLocalFiles = allowLocalFiles;
-        return this;
     }
 
 

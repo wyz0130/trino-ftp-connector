@@ -25,6 +25,7 @@ import io.trino.spi.Page;
 import io.trino.spi.TrinoException;
 import io.trino.spi.type.Type;
 import org.ebyhr.trino.storage.StorageColumnHandle;
+import org.ebyhr.trino.storage.StorageConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +50,7 @@ public class OrcPlugin
         implements FilePlugin
 {
     @Override
-    public List<StorageColumnHandle> getFields(String path, Function<String, InputStream> streamProvider)
+    public List<StorageColumnHandle> getFields(String path, Function<String, InputStream> streamProvider,StorageConfig storageConfig)
     {
         try (ClosableFile file = getLocalFile(path, streamProvider)) {
             OrcReader reader = getReader(file.getFile());

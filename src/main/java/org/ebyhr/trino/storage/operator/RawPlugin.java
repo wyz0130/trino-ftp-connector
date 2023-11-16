@@ -14,6 +14,7 @@
 package org.ebyhr.trino.storage.operator;
 
 import org.ebyhr.trino.storage.StorageColumnHandle;
+import org.ebyhr.trino.storage.StorageConfig;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -30,7 +31,7 @@ public class RawPlugin
         implements FilePlugin
 {
     @Override
-    public List<StorageColumnHandle> getFields(String path, Function<String, InputStream> streamProvider)
+    public List<StorageColumnHandle> getFields(String path, Function<String, InputStream> streamProvider, StorageConfig storageConfig)
     {
         return List.of(new StorageColumnHandle("data", VARCHAR));
     }

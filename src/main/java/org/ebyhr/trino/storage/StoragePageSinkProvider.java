@@ -39,7 +39,6 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
                                             ConnectorInsertTableHandle insertTableHandle,
                                             ConnectorPageSinkId pageSinkId)
     {
-        log.info("StoragePageSinkProvider2 :" + insertTableHandle);
         StorageInsertTableHandle storageInsertTableHandle = (StorageInsertTableHandle) insertTableHandle;
         return new StoragePageSink(storageClient, storageInsertTableHandle.getStorageTableHandle(),
                 storageInsertTableHandle.getStorageTable());

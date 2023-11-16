@@ -28,6 +28,7 @@ import io.trino.spi.type.BooleanType;
 import io.trino.spi.type.RowType;
 import io.trino.spi.type.Type;
 import org.ebyhr.trino.storage.StorageColumnHandle;
+import org.ebyhr.trino.storage.StorageConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class JsonPlugin
         implements FilePlugin
 {
     @Override
-    public List<StorageColumnHandle> getFields(String path, Function<String, InputStream> streamProvider)
+    public List<StorageColumnHandle> getFields(String path, Function<String, InputStream> streamProvider, StorageConfig storageConfig)
     {
         ObjectMapper objectMapper = new ObjectMapper();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(streamProvider.apply(path)))) {

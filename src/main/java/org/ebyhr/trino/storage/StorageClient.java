@@ -55,19 +55,21 @@ public class StorageClient
     private final HttpClient httpClient;
     private final boolean allowLocalFiles;
 
+    private final StorageConfig storageConfig;
+
     @Inject
-    public StorageClient(TrinoFileSystemFactory fileSystemFactory, @ForStorage HttpClient httpClient, StorageConfig storageConfig)
+    public StorageClient(TrinoFileSystemFactory fileSystemFactory, @ForStorage HttpClient httpClient,
+                         StorageConfig storageConfig)
     {
         this.fileSystemFactory = requireNonNull(fileSystemFactory, "fileSystemFactory is null");
         this.httpClient = requireNonNull(httpClient, "httpClient is null");
         this.allowLocalFiles = requireNonNull(storageConfig, "storageConfig is null").getAllowLocalFiles();
+        this.storageConfig = requireNonNull(storageConfig, "storageConfig is null");
     }
 
     public List<String> getSchemaNames()
     {
-        return Stream.of(FileType.values())
-                .map(FileType::toString)
-                .collect(Collectors.toList());
+        return Stream.of(FileType.values()).map(FileType::toString).collect(Collectors.toList());
     }
 
     public Set<String> getTableNames(String schema)
@@ -85,13 +87,14 @@ public class StorageClient
             throw new TrinoException(PERMISSION_DENIED, "Reading local files is disabled");
         }
         if (schema.equals(LIST_SCHEMA_NAME)) {
-            return new StorageTable(StorageSplit.Mode.LIST, tableName, List.of(new StorageColumnHandle("path", VarcharType.VARCHAR)));
+            return new StorageTable(StorageSplit.Mode.LIST, tableName, List.of(new StorageColumnHandle("path",
+                    VarcharType.VARCHAR)));
         }
 
         FilePlugin plugin = PluginFactory.create(schema);
         try {
-            List<StorageColumnHandle> columns = plugin.getFields(tableName, path -> getInputStream(session, path));
-            log.info("columns :"+columns.toString());
+            List<StorageColumnHandle> columns = plugin.getFields(tableName, path -> getInputStream(session, path),storageConfig);
+            log.info("columns :" + columns.toString());
             return new StorageTable(StorageSplit.Mode.TABLE, tableName, columns);
         }
         catch (Exception e) {
@@ -102,9 +105,7 @@ public class StorageClient
 
     private boolean isLocalFile(String path)
     {
-        return path.startsWith("file:") || !(
-                path.startsWith("http://") || path.startsWith("https://")
-                        || path.startsWith("hdfs://") || path.startsWith("s3a://") || path.startsWith("s3://"));
+        return path.startsWith("file:") || !(path.startsWith("http://") || path.startsWith("https://") || path.startsWith("hdfs://") || path.startsWith("s3a://") || path.startsWith("s3://"));
     }
 
     public InputStream getInputStream(ConnectorSession session, String path)
@@ -115,7 +116,8 @@ public class StorageClient
                 ByteResponseHandler.ByteResponse response = httpClient.execute(request, createByteResponseHandler());
                 int status = response.getStatusCode();
                 if (status != HttpStatus.OK.code()) {
-                    throw new IllegalStateException(format("Request to '%s' returned unexpected status code: '%d'", path, status));
+                    throw new IllegalStateException(format("Request to '%s' returned unexpected status code: '%d'",
+                            path, status));
                 }
                 return new ByteArrayInputStream(response.getBody());
             }
@@ -159,5 +161,10 @@ public class StorageClient
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public StorageConfig getStorageConfig()
+    {
+        return storageConfig;
     }
 }

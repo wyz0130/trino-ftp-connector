@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import io.airlift.log.Logger;
 import org.ebyhr.trino.storage.StorageColumnHandle;
+import org.ebyhr.trino.storage.StorageConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,7 +50,7 @@ public class CsvPlugin
     }
 
     @Override
-    public List<StorageColumnHandle> getFields(String path, Function<String, InputStream> streamProvider)
+    public List<StorageColumnHandle> getFields(String path, Function<String, InputStream> streamProvider, StorageConfig storageConfig)
     {
         try {
             log.info("getFields: Csv :"+path +"  streamProvider:"+streamProvider.toString());

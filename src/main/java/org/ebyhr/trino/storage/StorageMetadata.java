@@ -97,7 +97,7 @@ public class StorageMetadata implements ConnectorMetadata
     @Override
     public ConnectorTableMetadata getTableMetadata(ConnectorSession session, ConnectorTableHandle table)
     {
-        log.info("getTableMetadata :");
+
         StorageTableHandle storageTableHandle = (StorageTableHandle) table;
         RemoteTableName tableName = new RemoteTableName(storageTableHandle.getSchemaName(),
                 storageTableHandle.getTableName());
