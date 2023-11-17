@@ -10,6 +10,10 @@ import io.trino.spi.connector.ConnectorPageSinkId;
 import io.trino.spi.connector.ConnectorPageSinkProvider;
 import io.trino.spi.connector.ConnectorSession;
 import io.trino.spi.connector.ConnectorTransactionHandle;
+import io.trino.spi.type.Type;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class StoragePageSinkProvider implements ConnectorPageSinkProvider
 {
@@ -31,7 +35,7 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
                                             ConnectorPageSinkId pageSinkId)
     {
 
-        return new StoragePageSink(storageClient, null, null);
+        return new StoragePageSink(storageClient, null, null, null, null);
     }
 
     @Override
@@ -40,7 +44,19 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
                                             ConnectorPageSinkId pageSinkId)
     {
         StorageInsertTableHandle storageInsertTableHandle = (StorageInsertTableHandle) insertTableHandle;
+
+
+        List<Type> types = new ArrayList<>();
+        List<String> columns = new ArrayList<>();
+        List<StorageColumnHandle> columnHandles = storageInsertTableHandle.getStorageTable().getColumns();
+        log.info("storageInsertTableHandle :" + columnHandles.toString());
+
+        for (StorageColumnHandle column : columnHandles) {
+            types.add(column.getType());
+            columns.add(column.getName());
+        }
         return new StoragePageSink(storageClient, storageInsertTableHandle.getStorageTableHandle(),
-                storageInsertTableHandle.getStorageTable());
+                storageInsertTableHandle.getStorageTable(), types, columns);
     }
+
 }

@@ -16,6 +16,7 @@ package org.ebyhr.trino.storage;
 import com.google.inject.Injector;
 import io.airlift.bootstrap.Bootstrap;
 import io.airlift.json.JsonModule;
+import io.trino.connector.CatalogManagerModule;
 import io.trino.hdfs.HdfsModule;
 import io.trino.hdfs.authentication.HdfsAuthenticationModule;
 import io.trino.hdfs.azure.HiveAzureModule;

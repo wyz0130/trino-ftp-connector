@@ -18,6 +18,7 @@ import io.airlift.http.client.HttpClient;
 import io.airlift.http.client.HttpStatus;
 import io.airlift.http.client.Request;
 import io.airlift.log.Logger;
+import io.trino.connector.StaticCatalogManagerConfig;
 import io.trino.filesystem.FileIterator;
 import io.trino.filesystem.Location;
 import io.trino.filesystem.TrinoFileSystemFactory;
@@ -25,8 +26,11 @@ import io.trino.filesystem.local.LocalFileSystem;
 import io.trino.spi.TrinoException;
 import io.trino.spi.connector.ConnectorSession;
 import io.trino.spi.type.VarcharType;
+import org.ebyhr.trino.storage.catalog.CatalogMate;
+import org.ebyhr.trino.storage.catalog.JdbcConnector;
 import org.ebyhr.trino.storage.operator.FilePlugin;
 import org.ebyhr.trino.storage.operator.PluginFactory;
+import org.ebyhr.trino.storage.utils.Utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -55,16 +59,22 @@ public class StorageClient
     private final HttpClient httpClient;
     private final boolean allowLocalFiles;
 
-    private final StorageConfig storageConfig;
+    private StorageConfig storageConfig;
+    private StaticCatalogManagerConfig staticCatalogManagerConfig;
+    private CatalogMate catalogMate;
+
 
     @Inject
     public StorageClient(TrinoFileSystemFactory fileSystemFactory, @ForStorage HttpClient httpClient,
-                         StorageConfig storageConfig)
+                         StorageConfig storageConfig, StaticCatalogManagerConfig staticCatalogManagerConfig,
+                         CatalogMate catalogMate)
     {
         this.fileSystemFactory = requireNonNull(fileSystemFactory, "fileSystemFactory is null");
         this.httpClient = requireNonNull(httpClient, "httpClient is null");
         this.allowLocalFiles = requireNonNull(storageConfig, "storageConfig is null").getAllowLocalFiles();
         this.storageConfig = requireNonNull(storageConfig, "storageConfig is null");
+        this.staticCatalogManagerConfig = requireNonNull(staticCatalogManagerConfig, "storageConfig is null");
+        this.catalogMate = requireNonNull(catalogMate, "storageConfig is null");
     }
 
     public List<String> getSchemaNames()
@@ -93,8 +103,17 @@ public class StorageClient
 
         FilePlugin plugin = PluginFactory.create(schema);
         try {
-            List<StorageColumnHandle> columns = plugin.getFields(tableName, path -> getInputStream(session, path),storageConfig);
-            log.info("columns :" + columns.toString());
+            List<StorageColumnHandle> columns = null;
+            if (tableName.startsWith("ftp://") || tableName.startsWith("FTP://")) {
+//                log.info("=================" + staticCatalogManagerConfig.getCatalogConfigurationDir());
+//                log.info("=================catalogConnect " + catalogMate.getCatalogProperties().size());
+                this.storageConfig = Utils.ftpAnalyze(tableName, storageConfig);
+                storageConfig.setSchema(schema);
+                columns = JdbcConnector.getColumnHandle(storageConfig, catalogMate);
+            }
+            else {
+                columns = plugin.getFields(tableName, path -> getInputStream(session, path), storageConfig);
+            }
             return new StorageTable(StorageSplit.Mode.TABLE, tableName, columns);
         }
         catch (Exception e) {
@@ -127,9 +146,6 @@ public class StorageClient
 
             if (!allowLocalFiles) {
                 throw new TrinoException(PERMISSION_DENIED, "Reading local files is disabled");
-            }
-            if (!path.startsWith("file:")) {
-                path = "file:" + path;
             }
             return URI.create(path).toURL().openStream();
         }

@@ -29,7 +29,6 @@ public final class StorageColumnHandle
 {
     private final String name;
     private final Type type;
-
     @JsonCreator
     public StorageColumnHandle(
             @JsonProperty("name") String name,

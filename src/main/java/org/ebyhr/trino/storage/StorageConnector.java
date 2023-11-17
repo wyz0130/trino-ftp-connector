@@ -31,8 +31,7 @@ import java.util.Set;
 import static java.util.Objects.requireNonNull;
 import static org.ebyhr.trino.storage.StorageTransactionHandle.INSTANCE;
 
-public class StorageConnector
-        implements Connector
+public class StorageConnector implements Connector
 {
     private static final Logger log = Logger.get(StorageConnector.class);
 
@@ -43,25 +42,26 @@ public class StorageConnector
     private final StoragePageSinkProvider pageSinkProvider;
     private final Set<ConnectorTableFunction> connectorTableFunctions;
 
+
     @Inject
-    public StorageConnector(
-            LifeCycleManager lifeCycleManager,
-            StorageMetadata metadata,
-            StorageSplitManager splitManager,
-            StoragePageSourceProvider pageSourceProvider,
-            StoragePageSinkProvider pageSinkProvider,
-            Set<ConnectorTableFunction> connectorTableFunctions)
+    public StorageConnector(LifeCycleManager lifeCycleManager, StorageMetadata metadata,
+                            StorageSplitManager splitManager, StoragePageSourceProvider pageSourceProvider,
+                            StoragePageSinkProvider pageSinkProvider,
+                            Set<ConnectorTableFunction> connectorTableFunctions)
     {
         this.lifeCycleManager = requireNonNull(lifeCycleManager, "lifeCycleManager is null");
         this.metadata = requireNonNull(metadata, "metadata is null");
         this.splitManager = requireNonNull(splitManager, "splitManager is null");
         this.pageSourceProvider = requireNonNull(pageSourceProvider, "pageSourceProvider is null");
         this.pageSinkProvider = requireNonNull(pageSinkProvider, "pageSourceProvider is null");
-        this.connectorTableFunctions = ImmutableSet.copyOf(requireNonNull(connectorTableFunctions, "connectorTableFunctions is null"));
+
+        this.connectorTableFunctions = ImmutableSet.copyOf(requireNonNull(connectorTableFunctions,
+                "connectorTableFunctions is null"));
     }
 
     @Override
-    public ConnectorTransactionHandle beginTransaction(IsolationLevel isolationLevel, boolean readOnly, boolean autoCommit)
+    public ConnectorTransactionHandle beginTransaction(IsolationLevel isolationLevel, boolean readOnly,
+                                                       boolean autoCommit)
     {
         return INSTANCE;
     }
@@ -95,6 +95,7 @@ public class StorageConnector
     {
         return connectorTableFunctions;
     }
+
 
     @Override
     public final void shutdown()

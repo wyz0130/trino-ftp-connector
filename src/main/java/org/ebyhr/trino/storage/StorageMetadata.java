@@ -36,7 +36,7 @@ import io.trino.spi.statistics.ComputedStatistics;
 import org.ebyhr.trino.storage.ptf.ListTableFunction.QueryFunctionHandle;
 import org.ebyhr.trino.storage.ptf.ReadFileTableFunction.ReadFunctionHandle;
 
-import java.awt.desktop.PrintFilesEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -78,13 +78,13 @@ public class StorageMetadata implements ConnectorMetadata
     @Override
     public StorageTableHandle getTableHandle(ConnectorSession session, SchemaTableName tableName)
     {
-        log.info("getTableHandle :");
+
         if (!listSchemaNames(session).contains(tableName.getSchemaName())) {
             return null;
         }
 
         StorageTable table = storageClient.getTable(session, tableName.getSchemaName(), tableName.getTableName());
-        this.storageTable =table;
+        this.storageTable = table;
 
         log.info("getTableHandle : table :  " + table.toString());
         if (table == null) {
@@ -116,7 +116,7 @@ public class StorageMetadata implements ConnectorMetadata
     @Override
     public Map<String, ColumnHandle> getColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle)
     {
-        log.info("getColumnHandles :");
+
         StorageTableHandle storageTableHandle = (StorageTableHandle) tableHandle;
 
         StorageTable table = storageClient.getTable(session, storageTableHandle.getSchemaName(),
@@ -230,9 +230,17 @@ public class StorageMetadata implements ConnectorMetadata
     public ConnectorInsertTableHandle beginInsert(ConnectorSession session, ConnectorTableHandle tableHandle,
                                                   List<ColumnHandle> columns, RetryMode retryMode)
     {
+        List<StorageColumnHandle> storageColumnHandles = new ArrayList<>();
+        for (ColumnHandle column : columns) {
+            StorageColumnHandle storageColumnHandle = (StorageColumnHandle) column;
+            storageColumnHandles.add(storageColumnHandle);
+//            log.info(" beginInsert columns :" + storageColumnHandle.toString());
+        }
 
-        StorageTableHandle storageTableHandle=(StorageTableHandle)tableHandle;
-        return new StorageInsertTableHandle(storageTableHandle,storageTable);
+
+        StorageTableHandle storageTableHandle = (StorageTableHandle) tableHandle;
+
+        return new StorageInsertTableHandle(storageTableHandle, storageTable, storageColumnHandles);
     }
 
     @Override

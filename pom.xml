@@ -15,7 +15,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.targetJdk>17</project.build.targetJdk>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
+        <fastjson_version>1.2.28</fastjson_version>
 
         <dep.trino.version>422</dep.trino.version>
         <dep.airlift.version>237</dep.airlift.version>
@@ -77,6 +77,22 @@
     </dependencyManagement>
 
     <dependencies>
+
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.29</version>
+        </dependency>
+
+
+        <!-- https://mvnrepository.com/artifact/org.codehaus.jettison/jettison -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson_version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>commons-net</groupId>
@@ -320,7 +336,6 @@
             <groupId>io.trino</groupId>
             <artifactId>trino-main</artifactId>
             <version>${dep.trino.version}</version>
-            <scope>test</scope>
         </dependency>
 
         <dependency>

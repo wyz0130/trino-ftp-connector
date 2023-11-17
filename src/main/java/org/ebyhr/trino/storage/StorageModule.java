@@ -22,6 +22,7 @@ import com.google.inject.Scopes;
 import io.airlift.http.client.HttpClientConfig;
 import io.airlift.log.Logger;
 import io.opentelemetry.api.OpenTelemetry;
+import io.trino.connector.StaticCatalogManagerConfig;
 import io.trino.filesystem.TrinoFileSystemFactory;
 import io.trino.filesystem.hdfs.HdfsFileSystemFactory;
 import io.trino.hdfs.TrinoHdfsFileSystemStats;
@@ -29,6 +30,7 @@ import io.trino.spi.function.table.ConnectorTableFunction;
 import io.trino.spi.type.Type;
 import io.trino.spi.type.TypeManager;
 import io.trino.spi.type.TypeSignature;
+import org.ebyhr.trino.storage.catalog.CatalogMate;
 import org.ebyhr.trino.storage.ptf.ListTableFunction;
 import org.ebyhr.trino.storage.ptf.ReadFileTableFunction;
 
@@ -64,6 +66,10 @@ public class StorageModule implements Module
         binder.bind(StorageRecordSetProvider.class).in(Scopes.SINGLETON);
         binder.bind(StoragePageSourceProvider.class).in(Scopes.SINGLETON);
         binder.bind(StoragePageSinkProvider.class).in(Scopes.SINGLETON);
+        binder.bind(CatalogMate.class).in(Scopes.SINGLETON);
+
+        binder.bind(StoragePageSinkProvider.class).in(Scopes.SINGLETON);
+
 
         newSetBinder(binder, ConnectorTableFunction.class).addBinding().toProvider(ReadFileTableFunction.class).in(Scopes.SINGLETON);
         newSetBinder(binder, ConnectorTableFunction.class).addBinding().toProvider(ListTableFunction.class).in(Scopes.SINGLETON);
@@ -76,6 +82,7 @@ public class StorageModule implements Module
         configBinder(binder).bindConfig(HttpClientConfig.class, ForStorage.class);
         httpClientBinder(binder).bindHttpClient("storage", ForStorage.class);
 
+        configBinder(binder).bindConfig(StaticCatalogManagerConfig.class);
 
     }
 

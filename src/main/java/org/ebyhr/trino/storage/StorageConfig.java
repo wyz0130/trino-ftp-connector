@@ -17,6 +17,8 @@ package org.ebyhr.trino.storage;
 import io.airlift.configuration.Config;
 import io.airlift.configuration.ConfigDescription;
 
+import java.util.List;
+
 public class StorageConfig
 {
     private boolean allowLocalFiles = true;
@@ -26,6 +28,20 @@ public class StorageConfig
     private String ftpUser = "root";
     private String ftpPassWord = "root";
     private String ftpPort = "21";
+
+    // file type
+    private String schema;
+
+    // file  path
+    private String path;
+
+
+    private String catalog;
+    private String database;
+    private String table;
+
+    private List<String> column;
+
 
     public boolean getAllowLocalFiles()
     {
@@ -52,6 +68,11 @@ public class StorageConfig
         return ftpPort;
     }
 
+    public String getPath()
+    {
+        return path;
+    }
+
     @Config("allow-local-files")
     @ConfigDescription("If true, allow reading local files")
     public void setAllowLocalFiles(boolean allowLocalFiles)
@@ -60,29 +81,81 @@ public class StorageConfig
     }
 
 
-    @Config("ftp_host")
     public void setFtpHost(String ftpHost)
     {
         this.ftpHost = ftpHost;
     }
 
-    @Config("ftp_port")
+
     public void setFtpPort(String ftpPort)
     {
         this.ftpPort = ftpPort;
     }
 
-    @Config("ftp_user")
+
     public void setFtpUser(String ftpUser)
     {
         this.ftpUser = ftpUser;
     }
 
-    @Config("ftp_password")
+
     public void setFtpPassWord(String ftpPassWord)
     {
         this.ftpPassWord = ftpPassWord;
     }
 
+    public void setPath(String path)
+    {
+        this.path = path;
+    }
 
+    public String getCatalog()
+    {
+        return catalog;
+    }
+
+    public void setCatalog(String catalog)
+    {
+        this.catalog = catalog;
+    }
+
+    public String getSchema()
+    {
+        return schema;
+    }
+
+    public void setSchema(String schema)
+    {
+        this.schema = schema;
+    }
+
+    public String getTable()
+    {
+        return table;
+    }
+
+    public void setTable(String table)
+    {
+        this.table = table;
+    }
+
+    public List<String> getColumn()
+    {
+        return column;
+    }
+
+    public void setColumn(List<String> column)
+    {
+        this.column = column;
+    }
+
+    public String getDatabase()
+    {
+        return database;
+    }
+
+    public void setDatabase(String database)
+    {
+        this.database = database;
+    }
 }
