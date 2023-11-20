@@ -4,6 +4,7 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
 import org.ebyhr.trino.storage.StorageConfig;
+import org.ebyhr.trino.storage.dto.FtpConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,20 +14,20 @@ public class FtpUtils
 {
 
 
-    public static FTPClient getFTPClient(StorageConfig storageConfig)
+    public static FTPClient getFTPClient(FtpConfig ftpConfig)
     {
         FTPClient ftpClient = null;
         try {
             ftpClient = new FTPClient();
             ftpClient.setConnectTimeout(60000);
-            if (storageConfig.getFtpHost() != null) {
-                ftpClient.connect(storageConfig.getFtpHost(), Integer.valueOf(storageConfig.getFtpPort()));// 连接FTP服务器
+            if (ftpConfig.getFtpHost() != null) {
+                ftpClient.connect(ftpConfig.getFtpHost(), Integer.valueOf(ftpConfig.getFtpPort()));// 连接FTP服务器
             }
             else {
-                ftpClient.connect(storageConfig.getFtpHost());// 连接FTP服务器
+                ftpClient.connect(ftpConfig.getFtpHost());// 连接FTP服务器
             }
             if (FTPReply.isPositiveCompletion(ftpClient.getReplyCode())) {
-                if (ftpClient.login(storageConfig.getFtpUser(), storageConfig.getFtpPassWord())) {// 登陆FTP服务器
+                if (ftpClient.login(ftpConfig.getFtpUser(), ftpConfig.getFtpPassWord())) {// 登陆FTP服务器
                     if (FTPReply.isPositiveCompletion(ftpClient.sendCommand("OPTS UTF8", "ON"))) {// 开启服务器对UTF-8
                         // 的支持，如果服务器支持就用UTF-8编码，否则就使用本地编码（GBK）.
                         ftpClient.setControlEncoding("UTF-8");

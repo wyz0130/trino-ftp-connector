@@ -29,6 +29,7 @@ import io.trino.spi.type.VarcharType;
 import org.apache.commons.io.FileUtils;
 import org.ebyhr.trino.storage.StorageConfig;
 import org.ebyhr.trino.storage.catalog.CatalogMate;
+import org.ebyhr.trino.storage.dto.FtpConfig;
 
 import java.io.File;
 import java.util.Arrays;
@@ -47,44 +48,46 @@ public class Utils
     public static final HashSet<String> FLIP_SYMBOL_TYPE = new HashSet<>(Arrays.asList(StandardTypes.BIGINT,
             StandardTypes.INTEGER, StandardTypes.TINYINT, StandardTypes.SMALLINT, StandardTypes.DOUBLE));
 
-    public static StorageConfig ftpAnalyze(String path, StorageConfig storageConfig)
+    public static FtpConfig ftpAnalyze(String schemaName,String tableName)
     {
 
+        FtpConfig ftpConfig = new FtpConfig();
+        ftpConfig.setSchema(schemaName);
         // ftp://root:root@ 127.0.0.1:21/data?schema=doris.demo.table2{v1,v2}
-        log.info("ftpAnalyze path :" + path);
-        if (path.contains("{") && path.contains("}")) {
-            String columns = path.substring(path.indexOf("{"), path.indexOf("}") + 1);
-            path = path.replace(columns, "");
+        log.info("ftpAnalyze path :" + tableName);
+        if (tableName.contains("{") && tableName.contains("}")) {
+            String columns = tableName.substring(tableName.indexOf("{"), tableName.indexOf("}") + 1);
+            tableName = tableName.replace(columns, "");
             columns = columns.substring(1, columns.length() - 1);
             String[] split = columns.split(",");
-            storageConfig.setColumn(Arrays.asList(split));
-            path.replace(columns, "");
+            ftpConfig.setColumn(Arrays.asList(split));
+            tableName.replace(columns, "");
         }
-        if (path.startsWith(Constant.FTP)) {
-            path = path.replace(Constant.FTP, Constant.ftp);
+        if (tableName.startsWith(Constant.FTP)) {
+            tableName = tableName.replace(Constant.FTP, Constant.ftp);
         }
         //root:root@127.0.0.1:21/data?schema=doris.demo.table2
-        path = path.replace(Constant.ftp, "").trim();
-        String[] pathSplit = path.split("@");
+        tableName = tableName.replace(Constant.ftp, "").trim();
+        String[] pathSplit = tableName.split("@");
         //root:root
         String[] usrPwd = pathSplit[0].split(":");
-        storageConfig.setFtpUser(usrPwd[0]);
-        storageConfig.setFtpPassWord(usrPwd[1]);
+        ftpConfig.setFtpUser(usrPwd[0]);
+        ftpConfig.setFtpPassWord(usrPwd[1]);
 
         //127.0.0.1:21/data?schema=doris.demo.table2
         pathSplit = pathSplit[1].split("\\?");
         String catalogMate = pathSplit[1].replace("schema=", "").trim();
         String[] catalogArray = catalogMate.split("\\.");
-        storageConfig.setCatalog(catalogArray[0]);
-        storageConfig.setDatabase(catalogArray[1]);
-        storageConfig.setTable(catalogArray[2]);
+        ftpConfig.setCatalog(catalogArray[0]);
+        ftpConfig.setDatabase(catalogArray[1]);
+        ftpConfig.setTable(catalogArray[2]);
 
 
         //127.0.0.1:21/data
         pathSplit = pathSplit[0].split("/");
         String[] ipPort = pathSplit[0].split(":");
-        storageConfig.setFtpHost(ipPort[0]);
-        storageConfig.setFtpPort(ipPort[1]);
+        ftpConfig.setFtpHost(ipPort[0]);
+        ftpConfig.setFtpPort(ipPort[1]);
 
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("/");
@@ -93,8 +96,8 @@ public class Utils
             stringBuilder.append("/");
         }
         stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-        storageConfig.setPath(stringBuilder.toString());
-        return storageConfig;
+        ftpConfig.setPath(stringBuilder.toString());
+        return ftpConfig;
     }
 
     public static String fileName(String path)

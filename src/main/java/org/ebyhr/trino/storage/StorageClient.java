@@ -28,6 +28,7 @@ import io.trino.spi.connector.ConnectorSession;
 import io.trino.spi.type.VarcharType;
 import org.ebyhr.trino.storage.catalog.CatalogMate;
 import org.ebyhr.trino.storage.catalog.JdbcConnector;
+import org.ebyhr.trino.storage.dto.FtpConfig;
 import org.ebyhr.trino.storage.operator.FilePlugin;
 import org.ebyhr.trino.storage.operator.PluginFactory;
 import org.ebyhr.trino.storage.utils.Utils;
@@ -59,9 +60,9 @@ public class StorageClient
     private final HttpClient httpClient;
     private final boolean allowLocalFiles;
 
-    private StorageConfig storageConfig;
-    private StaticCatalogManagerConfig staticCatalogManagerConfig;
-    private CatalogMate catalogMate;
+    private final StorageConfig storageConfig;
+    private final StaticCatalogManagerConfig staticCatalogManagerConfig;
+    private final CatalogMate catalogMate;
 
 
     @Inject
@@ -69,12 +70,14 @@ public class StorageClient
                          StorageConfig storageConfig, StaticCatalogManagerConfig staticCatalogManagerConfig,
                          CatalogMate catalogMate)
     {
+
         this.fileSystemFactory = requireNonNull(fileSystemFactory, "fileSystemFactory is null");
         this.httpClient = requireNonNull(httpClient, "httpClient is null");
         this.allowLocalFiles = requireNonNull(storageConfig, "storageConfig is null").getAllowLocalFiles();
         this.storageConfig = requireNonNull(storageConfig, "storageConfig is null");
         this.staticCatalogManagerConfig = requireNonNull(staticCatalogManagerConfig, "storageConfig is null");
         this.catalogMate = requireNonNull(catalogMate, "storageConfig is null");
+
     }
 
     public List<String> getSchemaNames()
@@ -107,9 +110,8 @@ public class StorageClient
             if (tableName.startsWith("ftp://") || tableName.startsWith("FTP://")) {
 //                log.info("=================" + staticCatalogManagerConfig.getCatalogConfigurationDir());
 //                log.info("=================catalogConnect " + catalogMate.getCatalogProperties().size());
-                this.storageConfig = Utils.ftpAnalyze(tableName, storageConfig);
-                storageConfig.setSchema(schema);
-                columns = JdbcConnector.getColumnHandle(storageConfig, catalogMate);
+                FtpConfig ftpConfig = Utils.ftpAnalyze(schema,tableName);
+                columns = JdbcConnector.getColumnHandle(ftpConfig, catalogMate);
             }
             else {
                 columns = plugin.getFields(tableName, path -> getInputStream(session, path), storageConfig);

@@ -14,6 +14,7 @@ import io.trino.spi.type.TimestampType;
 import io.trino.spi.type.Type;
 import io.trino.spi.type.VarcharType;
 import org.apache.commons.net.ftp.FTPClient;
+import org.ebyhr.trino.storage.dto.FtpConfig;
 import org.ebyhr.trino.storage.utils.FtpUtils;
 
 import java.io.ByteArrayInputStream;
@@ -45,7 +46,7 @@ public class StoragePageSink implements ConnectorPageSink
     private final List<Type> types;
     private final List<String> columns;
 
-    private final StorageConfig storageConfig;
+    private final FtpConfig ftpConfig;
 
     private static String FILE = "file://";
 
@@ -53,14 +54,14 @@ public class StoragePageSink implements ConnectorPageSink
 
     private String fileName;
 
-    private StringBuilder tableData;
+
 
 
     public StoragePageSink(StorageClient storageClient, StorageTableHandle storageTableHandle,
-                           StorageTable storageTable, List<Type> types, List<String> columns)
+                           StorageTable storageTable, List<Type> types, List<String> columns, FtpConfig ftpConfig)
     {
         this.storageClient = storageClient;
-        this.storageConfig = storageClient.getStorageConfig();
+        this.ftpConfig = ftpConfig;
         this.storageTableHandle = storageTableHandle;
         this.storageTable = storageTable;
         this.types = types;
@@ -92,7 +93,6 @@ public class StoragePageSink implements ConnectorPageSink
                     stringBuilder.append("\n");
                 }
             }
-            log.info("stringBuilder " + stringBuilder.length());
             FtpWrite(stringBuilder);
             flag = false;
         }
@@ -111,8 +111,8 @@ public class StoragePageSink implements ConnectorPageSink
                         stringBuilder.append("\n");
                     }
                 }
-                FTPClient ftpClient = FtpUtils.getFTPClient(storageClient.getStorageConfig());
-                OutputStream outputStream = ftpClient.appendFileStream(storageConfig.getPath() + "/" + fileName);
+                FTPClient ftpClient = FtpUtils.getFTPClient(ftpConfig);
+                OutputStream outputStream = ftpClient.appendFileStream(ftpConfig.getPath() + "/" + fileName);
                 outputStream.write(stringBuilder.toString().getBytes());
                 outputStream.flush();
                 outputStream.close();
@@ -173,7 +173,9 @@ public class StoragePageSink implements ConnectorPageSink
 
     public FTPClient FtpWrite(StringBuilder stringBuilder)
     {
-        FTPClient ftpClient = FtpUtils.getFTPClient(storageClient.getStorageConfig());
+        log.info("Table  :" + ftpConfig.getTable());
+        log.info("Schema   :" + ftpConfig.getSchema());
+        FTPClient ftpClient = FtpUtils.getFTPClient(ftpConfig);
         InputStream is = null;
 
         try {
@@ -181,11 +183,11 @@ public class StoragePageSink implements ConnectorPageSink
             //1.输入流
             is = new ByteArrayInputStream(stringBuilder.toString().getBytes());
             //2.指定写入的目录
-            ftpClient.changeWorkingDirectory(storageConfig.getPath());
+            ftpClient.changeWorkingDirectory(ftpConfig.getPath());
             //3.写操作
             ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
             fileName =
-                    new StringBuilder(storageConfig.getTable() + "_" + new Date().getTime() + "." + storageConfig.getSchema()).toString();
+                    new StringBuilder(ftpConfig.getTable() + "_" + new Date().getTime() + "." + ftpConfig.getSchema()).toString();
             fileName = new String(fileName.getBytes("utf-8"), "iso-8859-1");
             ftpClient.storeFile(fileName, is);
             log.info("FtpWrite :" + fileName);

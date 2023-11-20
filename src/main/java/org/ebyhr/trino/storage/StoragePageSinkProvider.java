@@ -35,7 +35,7 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
                                             ConnectorPageSinkId pageSinkId)
     {
 
-        return new StoragePageSink(storageClient, null, null, null, null);
+        return new StoragePageSink(storageClient, null, null, null, null,null);
     }
 
     @Override
@@ -49,14 +49,13 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
         List<Type> types = new ArrayList<>();
         List<String> columns = new ArrayList<>();
         List<StorageColumnHandle> columnHandles = storageInsertTableHandle.getStorageTable().getColumns();
-        log.info("storageInsertTableHandle :" + columnHandles.toString());
-
         for (StorageColumnHandle column : columnHandles) {
             types.add(column.getType());
             columns.add(column.getName());
         }
+        log.info("createPageSink 2:"+storageClient.getStorageConfig().toString());
         return new StoragePageSink(storageClient, storageInsertTableHandle.getStorageTableHandle(),
-                storageInsertTableHandle.getStorageTable(), types, columns);
+                storageInsertTableHandle.getStorageTable(), types, columns,storageInsertTableHandle.getFtpConfig());
     }
 
 }

@@ -4,6 +4,7 @@ import io.airlift.log.Logger;
 import io.trino.connector.CatalogProperties;
 import org.ebyhr.trino.storage.StorageColumnHandle;
 import org.ebyhr.trino.storage.StorageConfig;
+import org.ebyhr.trino.storage.dto.FtpConfig;
 import org.ebyhr.trino.storage.utils.Utils;
 
 import java.sql.Connection;
@@ -18,9 +19,9 @@ public class JdbcConnector
 {
     public static final Logger log = Logger.get(JdbcConnector.class);
 
-    public static List<StorageColumnHandle> getColumnHandle(StorageConfig storageConfig, CatalogMate catalogMate)
+    public static List<StorageColumnHandle> getColumnHandle(FtpConfig ftpConfig, CatalogMate catalogMate)
     {
-        CatalogProperties catalog = Utils.getCatalog(storageConfig.getCatalog(), catalogMate);
+        CatalogProperties catalog = Utils.getCatalog(ftpConfig.getCatalog(), catalogMate);
         Map<String, String> properties = catalog.getProperties();
 
         List<StorageColumnHandle> storageColumnHandles = new ArrayList<>();
@@ -31,7 +32,7 @@ public class JdbcConnector
             Class.forName("com.mysql.jdbc.Driver");
             Connection connection = DriverManager.getConnection(url, user, password);
             DatabaseMetaData metaData = connection.getMetaData();
-            ResultSet rs = metaData.getColumns(null, storageConfig.getDatabase(), storageConfig.getTable(), "%");
+            ResultSet rs = metaData.getColumns(null, ftpConfig.getDatabase(), ftpConfig.getTable(), "%");
             while (rs.next()) {
                 String columnType = rs.getString("TYPE_NAME");
                 String columnName = rs.getString("COLUMN_NAME");

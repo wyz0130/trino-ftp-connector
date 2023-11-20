@@ -33,8 +33,10 @@ import io.trino.spi.connector.TableFunctionApplicationResult;
 import io.trino.spi.connector.TableNotFoundException;
 import io.trino.spi.function.table.ConnectorTableFunctionHandle;
 import io.trino.spi.statistics.ComputedStatistics;
+import org.ebyhr.trino.storage.dto.FtpConfig;
 import org.ebyhr.trino.storage.ptf.ListTableFunction.QueryFunctionHandle;
 import org.ebyhr.trino.storage.ptf.ReadFileTableFunction.ReadFunctionHandle;
+import org.ebyhr.trino.storage.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -239,8 +241,10 @@ public class StorageMetadata implements ConnectorMetadata
 
 
         StorageTableHandle storageTableHandle = (StorageTableHandle) tableHandle;
+        StorageTable table = storageClient.getTable(session, storageTableHandle.getSchemaName(), storageTableHandle.getTableName());
+        FtpConfig ftpConfig = Utils.ftpAnalyze(storageTableHandle.getSchemaName(),storageTableHandle.getTableName());
 
-        return new StorageInsertTableHandle(storageTableHandle, storageTable, storageColumnHandles);
+        return new StorageInsertTableHandle(storageTableHandle, table, storageColumnHandles,ftpConfig);
     }
 
     @Override
