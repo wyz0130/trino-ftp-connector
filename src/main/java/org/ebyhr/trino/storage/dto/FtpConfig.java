@@ -25,6 +25,7 @@ public class FtpConfig
 
     private List<String> column;
 
+    private String nodeId;
 
     @JsonCreator
     public FtpConfig()
@@ -148,9 +149,20 @@ public class FtpConfig
         this.column = column;
     }
 
+    @JsonProperty
+    public String getNodeId()
+    {
+        return nodeId;
+    }
+    @JsonProperty
+    public void setNodeId(String nodeId)
+    {
+        this.nodeId = nodeId;
+    }
+
     @Override
     public String toString()
     {
-        return "FtpConfig{" + "ftpHost='" + ftpHost + '\'' + ", ftpUser='" + ftpUser + '\'' + ", ftpPassWord='" + ftpPassWord + '\'' + ", ftpPort='" + ftpPort + '\'' + ", schema='" + schema + '\'' + ", path='" + path + '\'' + ", catalog='" + catalog + '\'' + ", database='" + database + '\'' + ", table='" + table + '\'' + ", column=" + column + '}';
+        return "FtpConfig{" + "ftpHost='" + ftpHost + '\'' + ", ftpUser='" + ftpUser + '\'' + ", ftpPassWord='" + ftpPassWord + '\'' + ", ftpPort='" + ftpPort + '\'' + ", schema='" + schema + '\'' + ", path='" + path + '\'' + ", catalog='" + catalog + '\'' + ", database='" + database + '\'' + ", table='" + table + '\'' + ", column=" + column + ", nodeId='" + nodeId + '\'' + '}';
     }
 }

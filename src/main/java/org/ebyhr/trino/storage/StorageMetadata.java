@@ -16,6 +16,7 @@ package org.ebyhr.trino.storage;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.airlift.log.Logger;
+import io.airlift.node.NodeConfig;
 import io.airlift.slice.Slice;
 import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.connector.ColumnMetadata;
@@ -38,6 +39,7 @@ import org.ebyhr.trino.storage.ptf.ListTableFunction.QueryFunctionHandle;
 import org.ebyhr.trino.storage.ptf.ReadFileTableFunction.ReadFunctionHandle;
 import org.ebyhr.trino.storage.utils.Utils;
 
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -55,15 +57,19 @@ import static org.ebyhr.trino.storage.ptf.ListTableFunction.LIST_SCHEMA_NAME;
 public class StorageMetadata implements ConnectorMetadata
 {
     private final StorageClient storageClient;
+//    private  NodeWork nodeWork;
 
     private StorageTable storageTable;
+    private NodeConfig nodeConfig;
+
 
     private static final Logger log = Logger.get(StorageMetadata.class);
 
     @Inject
-    public StorageMetadata(StorageClient storageClient)
+    public StorageMetadata(StorageClient storageClient, NodeConfig nodeConfig)
     {
         this.storageClient = requireNonNull(storageClient, "storageClient is null");
+        this.nodeConfig = requireNonNull(nodeConfig, "nodeConfig is null");
     }
 
     @Override
@@ -240,11 +246,14 @@ public class StorageMetadata implements ConnectorMetadata
         }
 
 
+        log.info("nodeInfo :" + nodeConfig.getNodeId());
         StorageTableHandle storageTableHandle = (StorageTableHandle) tableHandle;
-        StorageTable table = storageClient.getTable(session, storageTableHandle.getSchemaName(), storageTableHandle.getTableName());
-        FtpConfig ftpConfig = Utils.ftpAnalyze(storageTableHandle.getSchemaName(),storageTableHandle.getTableName());
+        StorageTable table = storageClient.getTable(session, storageTableHandle.getSchemaName(),
+                storageTableHandle.getTableName());
+        FtpConfig ftpConfig = Utils.ftpAnalyze(storageTableHandle.getSchemaName(), storageTableHandle.getTableName());
+//        ftpConfig.setNodeId(nodeConfig.getNodeId());
 
-        return new StorageInsertTableHandle(storageTableHandle, table, storageColumnHandles,ftpConfig);
+        return new StorageInsertTableHandle(storageTableHandle, table, storageColumnHandles, ftpConfig);
     }
 
     @Override

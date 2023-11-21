@@ -21,6 +21,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import io.airlift.http.client.HttpClientConfig;
 import io.airlift.log.Logger;
+import io.airlift.node.NodeConfig;
 import io.opentelemetry.api.OpenTelemetry;
 import io.trino.connector.StaticCatalogManagerConfig;
 import io.trino.filesystem.TrinoFileSystemFactory;
@@ -68,6 +69,13 @@ public class StorageModule implements Module
         binder.bind(StoragePageSinkProvider.class).in(Scopes.SINGLETON);
         binder.bind(CatalogMate.class).in(Scopes.SINGLETON);
 
+        configBinder(binder).bindConfig(NodeConfig.class);
+//        configBinder(binder).bindConfigGlobalDefaults(NodeConfig.class, config -> config.setInternalAddressSource
+//        (IP_ENCODED_AS_HOSTNAME));
+
+//        binder.bind(NodeWork.class).in(Scopes.SINGLETON);
+
+
         binder.bind(StoragePageSinkProvider.class).in(Scopes.SINGLETON);
 
 
@@ -83,6 +91,7 @@ public class StorageModule implements Module
         httpClientBinder(binder).bindHttpClient("storage", ForStorage.class);
 
         configBinder(binder).bindConfig(StaticCatalogManagerConfig.class);
+
 
     }
 

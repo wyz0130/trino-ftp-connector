@@ -3,7 +3,6 @@ package org.ebyhr.trino.storage.utils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPReply;
-import org.ebyhr.trino.storage.StorageConfig;
 import org.ebyhr.trino.storage.dto.FtpConfig;
 
 import java.io.IOException;
@@ -38,27 +37,32 @@ public class FtpUtils
                     ftpClient.enterLocalPassiveMode();// 设置被动模式
                     ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);// 设置传输的模式，以二进制流的方式读取
                     ftpClient.enterLocalPassiveMode();
-                    System.out.println("FTP服务连接成功！");
+//                    System.out.println("FTP服务连接成功！");
                 }
                 else {
-                    System.out.println("FTP服务用户名或密码错误！");
+//                    System.out.println("FTP服务用户名或密码错误！");
                     disConnection(ftpClient);
+                    throw  new RuntimeException("The FTP service user name or password is incorrect!");
                 }
             }
             else {
-                System.out.println("连接到FTP服务失败！");
+//                System.out.println("连接到FTP服务失败！");
                 disConnection(ftpClient);
+                throw  new RuntimeException("Failed to connect to FTP service!");
             }
         }
         catch (SocketException e) {
             e.printStackTrace();
             disConnection(ftpClient);
-            System.out.println("FTP的IP地址可能错误，请正确配置。");
+//            System.out.println("FTP的IP地址可能错误，请正确配置。");
+            throw  new RuntimeException("The FTP IP address may be incorrect. Please configure it correctly.");
         }
+
         catch (IOException e) {
             e.printStackTrace();
             disConnection(ftpClient);
-            System.out.println("FTP的端口错误,请正确配置。");
+//            System.out.println("FTP的端口错误,请正确配置。");
+            throw  new RuntimeException("The FTP port is incorrect. Please configure it correctly.");
         }
         return ftpClient;
     }

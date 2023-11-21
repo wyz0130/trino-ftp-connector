@@ -3,6 +3,7 @@ package org.ebyhr.trino.storage;
 
 import com.google.inject.Inject;
 import io.airlift.log.Logger;
+import io.airlift.node.NodeConfig;
 import io.trino.spi.connector.ConnectorInsertTableHandle;
 import io.trino.spi.connector.ConnectorOutputTableHandle;
 import io.trino.spi.connector.ConnectorPageSink;
@@ -11,8 +12,10 @@ import io.trino.spi.connector.ConnectorPageSinkProvider;
 import io.trino.spi.connector.ConnectorSession;
 import io.trino.spi.connector.ConnectorTransactionHandle;
 import io.trino.spi.type.Type;
+import org.ebyhr.trino.storage.dto.FtpConfig;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class StoragePageSinkProvider implements ConnectorPageSinkProvider
@@ -21,11 +24,14 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
 
     private final StorageClient storageClient;
 
+    private  NodeConfig nodeConfig;
+
     @Inject
-    public StoragePageSinkProvider(StorageClient storageClient)
+    public StoragePageSinkProvider(StorageClient storageClient,NodeConfig nodeConfig)
     {
         log.info("StoragePageSinkProvider :");
         this.storageClient = storageClient;
+        this.nodeConfig = nodeConfig;
 
     }
 
@@ -35,7 +41,7 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
                                             ConnectorPageSinkId pageSinkId)
     {
 
-        return new StoragePageSink(storageClient, null, null, null, null,null);
+        return new StoragePageSink(storageClient,  null,null, null, null,null);
     }
 
     @Override
@@ -52,10 +58,12 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
         for (StorageColumnHandle column : columnHandles) {
             types.add(column.getType());
             columns.add(column.getName());
+
         }
-        log.info("createPageSink 2:"+storageClient.getStorageConfig().toString());
+        FtpConfig ftpConfig = storageInsertTableHandle.getFtpConfig();
+        ftpConfig.setNodeId(nodeConfig.getNodeId()+"_"+pageSinkId.getId());
         return new StoragePageSink(storageClient, storageInsertTableHandle.getStorageTableHandle(),
-                storageInsertTableHandle.getStorageTable(), types, columns,storageInsertTableHandle.getFtpConfig());
+                storageInsertTableHandle.getStorageTable(), types, columns,ftpConfig);
     }
 
 }
