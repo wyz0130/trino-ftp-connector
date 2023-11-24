@@ -18,7 +18,7 @@
         <fastjson_version>1.2.28</fastjson_version>
 
         <dep.trino.version>422</dep.trino.version>
-        <dep.airlift.version>237</dep.airlift.version>
+        <dep.airlift.version>239</dep.airlift.version>
         <dep.slice.version>2.2</dep.slice.version>
         <dep.opentelemetry.version>1.31.0</dep.opentelemetry.version>
         <dep.opentelemetry-instrumentation.version>1.31.0</dep.opentelemetry-instrumentation.version>
