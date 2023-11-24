@@ -27,7 +27,7 @@
         <dep.guava.version>32.1.3-jre</dep.guava.version>
         <dep.guice.version>7.0.0</dep.guice.version>
         <dep.errorprone.version>2.23.0</dep.errorprone.version>
-        <dep.jackson.version>2.15.3</dep.jackson.version>
+        <dep.jackson.version>2.16.0</dep.jackson.version>
         <dep.testcontainers.version>1.19.1</dep.testcontainers.version>
         <dep.docker-java.version>3.3.4</dep.docker-java.version>
         <dep.testng.version>7.8.0</dep.testng.version>
