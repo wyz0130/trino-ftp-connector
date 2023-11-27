@@ -34,11 +34,11 @@ import io.trino.spi.connector.TableFunctionApplicationResult;
 import io.trino.spi.connector.TableNotFoundException;
 import io.trino.spi.function.table.ConnectorTableFunctionHandle;
 import io.trino.spi.statistics.ComputedStatistics;
+import io.trino.spi.type.Type;
 import org.ebyhr.trino.storage.dto.FtpConfig;
 import org.ebyhr.trino.storage.ptf.ListTableFunction.QueryFunctionHandle;
 import org.ebyhr.trino.storage.ptf.ReadFileTableFunction.ReadFunctionHandle;
 import org.ebyhr.trino.storage.utils.Utils;
-
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,7 +94,7 @@ public class StorageMetadata implements ConnectorMetadata
         StorageTable table = storageClient.getTable(session, tableName.getSchemaName(), tableName.getTableName());
         this.storageTable = table;
 
-        log.info("getTableHandle : table :  " + table.toString());
+        log.debug("getTableHandle : table :  " + table.toString());
         if (table == null) {
             return null;
         }
@@ -116,7 +116,7 @@ public class StorageMetadata implements ConnectorMetadata
     @Override
     public List<SchemaTableName> listTables(ConnectorSession session, Optional<String> schemaNameOrNull)
     {
-        log.info("listTables :");
+        log.debug("listTables :");
         SchemaTablePrefix prefix = schemaNameOrNull.map(SchemaTablePrefix::new).orElseGet(SchemaTablePrefix::new);
         return listTables(prefix).map(RemoteTableName::toSchemaTableName).collect(toImmutableList());
     }
@@ -144,7 +144,7 @@ public class StorageMetadata implements ConnectorMetadata
     public Map<SchemaTableName, List<ColumnMetadata>> listTableColumns(ConnectorSession session,
                                                                        SchemaTablePrefix prefix)
     {
-        log.info("listTableColumns :");
+        log.debug("listTableColumns :");
         requireNonNull(prefix, "prefix is null");
         ImmutableMap.Builder<SchemaTableName, List<ColumnMetadata>> columns = ImmutableMap.builder();
         for (RemoteTableName tableName : listTables(prefix).toList()) {
@@ -160,7 +160,7 @@ public class StorageMetadata implements ConnectorMetadata
     @Override
     public Iterator<TableColumnsMetadata> streamTableColumns(ConnectorSession session, SchemaTablePrefix prefix)
     {
-        log.info("streamTableColumns :");
+        log.debug("streamTableColumns :");
         requireNonNull(prefix, "prefix is null");
         return listTables(prefix).map(table -> TableColumnsMetadata.forTable(table.toSchemaTableName(),
                 requireNonNull(getStorageTableMetadata(session, table), "tableMetadata is null").getColumns())).iterator();
@@ -168,7 +168,7 @@ public class StorageMetadata implements ConnectorMetadata
 
     private ConnectorTableMetadata getStorageTableMetadata(ConnectorSession session, RemoteTableName tableName)
     {
-        log.info("getStorageTableMetadata :");
+        log.debug("getStorageTableMetadata :");
         if (tableName.schemaName().equals(LIST_SCHEMA_NAME)) {
             return new ConnectorTableMetadata(tableName.toSchemaTableName(), COLUMNS_METADATA);
         }
@@ -187,7 +187,7 @@ public class StorageMetadata implements ConnectorMetadata
 
     private Stream<RemoteTableName> listTables(SchemaTablePrefix prefix)
     {
-        log.info("listTables :");
+        log.debug("listTables :");
         if (prefix.getSchema().isPresent() && prefix.getTable().isPresent()) {
             return Stream.of(new RemoteTableName(prefix.getSchema().get(), prefix.getTable().get()));
         }
@@ -201,7 +201,7 @@ public class StorageMetadata implements ConnectorMetadata
     public ColumnMetadata getColumnMetadata(ConnectorSession session, ConnectorTableHandle tableHandle,
                                             ColumnHandle columnHandle)
     {
-        log.info("getColumnMetadata :");
+        log.debug("getColumnMetadata :");
         return ((StorageColumnHandle) columnHandle).getColumnMetadata();
     }
 
@@ -209,7 +209,7 @@ public class StorageMetadata implements ConnectorMetadata
     public Optional<TableFunctionApplicationResult<ConnectorTableHandle>> applyTableFunction(ConnectorSession session
             , ConnectorTableFunctionHandle handle)
     {
-        log.info("applyTableFunction :");
+        log.debug("applyTableFunction :");
         if (handle instanceof ReadFunctionHandle catFunctionHandle) {
             return Optional.of(new TableFunctionApplicationResult<>(catFunctionHandle.getTableHandle(),
                     catFunctionHandle.getColumns().stream().map(column -> new StorageColumnHandle(column.getName(),
@@ -239,21 +239,27 @@ public class StorageMetadata implements ConnectorMetadata
                                                   List<ColumnHandle> columns, RetryMode retryMode)
     {
         List<StorageColumnHandle> storageColumnHandles = new ArrayList<>();
+        List<Type> columnTypes = new ArrayList<>();
+        List<String> columnNames = new ArrayList<>();
+
         for (ColumnHandle column : columns) {
             StorageColumnHandle storageColumnHandle = (StorageColumnHandle) column;
+            columnTypes.add(storageColumnHandle.getType());
+            columnNames.add(storageColumnHandle.getName());
             storageColumnHandles.add(storageColumnHandle);
-//            log.info(" beginInsert columns :" + storageColumnHandle.toString());
         }
 
 
-        log.info("nodeInfo :" + nodeConfig.getNodeId());
         StorageTableHandle storageTableHandle = (StorageTableHandle) tableHandle;
         StorageTable table = storageClient.getTable(session, storageTableHandle.getSchemaName(),
                 storageTableHandle.getTableName());
         FtpConfig ftpConfig = Utils.ftpAnalyze(storageTableHandle.getSchemaName(), storageTableHandle.getTableName());
-//        ftpConfig.setNodeId(nodeConfig.getNodeId());
+        ftpConfig.setColumnSeparator(storageClient.getStorageConfig().getSeparator());
+        ftpConfig.setFormat(storageClient.getStorageConfig().getFormat());
 
-        return new StorageInsertTableHandle(storageTableHandle, table, storageColumnHandles, ftpConfig);
+
+        return new StorageInsertTableHandle(storageTableHandle, table, storageColumnHandles, ftpConfig, columnTypes,
+                columnNames);
     }
 
     @Override

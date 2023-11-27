@@ -27,6 +27,11 @@ public class FtpConfig
 
     private String nodeId;
 
+    private String format = "json";
+
+    private char columnSeparator;
+
+
     @JsonCreator
     public FtpConfig()
     {
@@ -133,16 +138,19 @@ public class FtpConfig
     {
         return table;
     }
+
     @JsonProperty
     public void setTable(String table)
     {
         this.table = table;
     }
+
     @JsonProperty
     public List<String> getColumn()
     {
         return column;
     }
+
     @JsonProperty
     public void setColumn(List<String> column)
     {
@@ -154,15 +162,56 @@ public class FtpConfig
     {
         return nodeId;
     }
+
     @JsonProperty
     public void setNodeId(String nodeId)
     {
         this.nodeId = nodeId;
     }
 
+    @JsonProperty
+    public String getFormat()
+    {
+        return format;
+    }
+
+    @JsonProperty
+    public void setFormat(String format)
+    {
+        this.format = format;
+    }
+
+    @JsonProperty
+    public char getColumnSeparator()
+    {
+        return columnSeparator;
+    }
+
+    @JsonProperty
+    public void setColumnSeparator(String separator)
+    {
+        try {
+            if (separator.length() == 1) {
+                this.columnSeparator = separator.charAt(0);
+            }
+            else {
+                if (separator.charAt(0) == '\\' && separator.charAt(1) == 'x') {
+                    separator = separator.substring(2, separator.length());
+                }
+                else if (separator.charAt(0) == '0' && separator.charAt(1) == 'x') {
+                    separator = separator.substring(2, separator.length());
+                }
+                this.columnSeparator = (char) Integer.parseInt(separator, 16);
+            }
+        }
+        catch (NumberFormatException e) {
+            throw new RuntimeException("column_separator Not a hexadecimal string ");
+        }
+    }
+
     @Override
     public String toString()
     {
-        return "FtpConfig{" + "ftpHost='" + ftpHost + '\'' + ", ftpUser='" + ftpUser + '\'' + ", ftpPassWord='" + ftpPassWord + '\'' + ", ftpPort='" + ftpPort + '\'' + ", schema='" + schema + '\'' + ", path='" + path + '\'' + ", catalog='" + catalog + '\'' + ", database='" + database + '\'' + ", table='" + table + '\'' + ", column=" + column + ", nodeId='" + nodeId + '\'' + '}';
+        return "FtpConfig{" + "ftpHost='" + ftpHost + '\'' + ", ftpUser='" + ftpUser + '\'' + ", ftpPassWord='" + ftpPassWord + '\'' + ", ftpPort='" + ftpPort + '\'' + ", schema='" + schema + '\'' + ", path='" + path + '\'' + ", catalog='" + catalog + '\'' + ", database='" + database + '\'' + ", table='" + table + '\'' + ", column=" + column + ", nodeId='" + nodeId + '\'' + ", format='" + format + '\'' + ", columnSeparator=" + columnSeparator + '}';
     }
 }

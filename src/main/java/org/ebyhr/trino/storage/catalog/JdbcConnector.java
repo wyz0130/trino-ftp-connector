@@ -43,7 +43,7 @@ public class JdbcConnector
 
                 log.info(columnName + " " + columnType + " " + precision + " " + scale);
                 storageColumnHandles.add(storageColumnHandle);
-                log.info("storageColumnHandle :" + storageColumnHandle.toString());
+                log.debug("storageColumnHandle :" + storageColumnHandle.toString());
             }
 
         }

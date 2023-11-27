@@ -54,7 +54,7 @@ public class Utils
         FtpConfig ftpConfig = new FtpConfig();
         ftpConfig.setSchema(schemaName);
         // ftp://root:root@ 127.0.0.1:21/data?schema=doris.demo.table2{v1,v2}
-        log.info("ftpAnalyze path :" + tableName);
+        log.debug("ftpAnalyze path :" + tableName);
         if (tableName.contains("{") && tableName.contains("}")) {
             String columns = tableName.substring(tableName.indexOf("{"), tableName.indexOf("}") + 1);
             tableName = tableName.replace(columns, "");
@@ -104,7 +104,7 @@ public class Utils
     {
         String[] split = path.split("/");
         for (String s : split) {
-            log.info("split :" + s);
+            log.debug("split :" + s);
         }
         path = split[split.length - 1];
         String[] split1 = path.split("\\..");
@@ -122,7 +122,7 @@ public class Utils
     {
         try {
             String tableMetaPath = metaDir + File.separator + tableName + Constant.TABLE_META_FILE_TAIL;
-            log.info("tableMetaPath : " + tableMetaPath);
+            log.debug("tableMetaPath : " + tableMetaPath);
             return FileUtils.readFileToString(new File(tableMetaPath), Constant.JSON_ENCODING_UTF8);
         }
         catch (Exception e) {
@@ -145,7 +145,7 @@ public class Utils
         long startTime = System.currentTimeMillis();
         try {
             String jsonString = readTableJson(tableName, metaDir);
-            log.info("getTableMetaInfoFromJson" + jsonString);
+            log.debug("getTableMetaInfoFromJson" + jsonString);
             return jsonString;
         }
         catch (Exception e) {
@@ -167,7 +167,7 @@ public class Utils
      */
     public static Type matchType(String type, Integer precision, Integer scale)
     {
-        log.info("type :" + type);
+        log.debug("type :" + type);
         if (type == null) {
             return VarcharType.VARCHAR;
         }
@@ -192,7 +192,7 @@ public class Utils
             case "datetime":
                 return TimestampType.TIMESTAMP_MILLIS;
             case "decimal":
-                log.info("set type   ===================decimal");
+                log.debug("set type   ===================decimal");
                 return DecimalType.createDecimalType(precision, scale);
             case "number":
                 return DecimalType.createDecimalType(Constant.DECIMAL_DEFAULT_PRECISION,

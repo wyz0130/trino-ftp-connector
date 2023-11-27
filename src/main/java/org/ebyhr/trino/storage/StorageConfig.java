@@ -17,22 +17,20 @@ package org.ebyhr.trino.storage;
 import io.airlift.configuration.Config;
 import io.airlift.configuration.ConfigDescription;
 
-import java.util.List;
-
 public class StorageConfig
 {
     private boolean allowLocalFiles = true;
 
+    private String separator = ",";
 
+    private String format = "json";
 
+    private char columnSeparator;
 
     public boolean getAllowLocalFiles()
     {
         return allowLocalFiles;
     }
-
-
-
 
 
     @Config("allow-local-files")
@@ -43,9 +41,42 @@ public class StorageConfig
     }
 
 
+    public String getSeparator()
+    {
+        return separator;
+    }
+
+    @Config("column_separator")
+    public void setSeparator(String separator)
+    {
+        this.separator = separator;
+    }
+
+    public String getFormat()
+    {
+        return format;
+    }
+
+    @Config("format")
+    public void setFormat(String format)
+    {
+        this.format = format;
+    }
+
+    public char getColumnSeparator()
+    {
+        return columnSeparator;
+    }
+
+    public void setColumnSeparator(char columnSeparator)
+    {
+        this.columnSeparator = columnSeparator;
+    }
+
     @Override
     public String toString()
     {
-        return "StorageConfig{" + "allowLocalFiles=" + allowLocalFiles + '}';
+        return "StorageConfig{" + "allowLocalFiles=" + allowLocalFiles + ", separator='" + separator + '\'' + ", " +
+                "format='" + format + '\'' + ", columnSeparator=" + columnSeparator + '}';
     }
 }

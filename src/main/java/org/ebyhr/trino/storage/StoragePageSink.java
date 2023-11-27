@@ -1,6 +1,7 @@
 package org.ebyhr.trino.storage;
 
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableList;
 import io.airlift.log.Logger;
 import io.airlift.slice.Slice;
@@ -16,6 +17,7 @@ import io.trino.spi.type.VarcharType;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.ebyhr.trino.storage.dto.FtpConfig;
+import org.ebyhr.trino.storage.utils.Constant;
 import org.ebyhr.trino.storage.utils.FtpUtils;
 
 import java.io.ByteArrayInputStream;
@@ -25,6 +27,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -52,7 +55,7 @@ public class StoragePageSink implements ConnectorPageSink
 
     private static String FILE = "file://";
 
-    boolean flag = true;
+    boolean fileIsExist = false;
 
     private String fileName;
 
@@ -75,99 +78,79 @@ public class StoragePageSink implements ConnectorPageSink
     {
         StringBuilder stringBuilder = new StringBuilder();
         try {
-            log.info("flag :"+flag);
-            if (flag) {
-                fileName = ftpConfig.getTable() + "_" + ftpConfig.getNodeId() + "." + ftpConfig.getSchema();
-                log.info("appendPage :"+fileName);
-                FTPClient ftpClient = FtpUtils.getFTPClient(ftpConfig);
-                FTPFile[] ftpFiles = ftpClient.listFiles(ftpConfig.getPath()+"/"+fileName);
-                if(ftpFiles!=null && ftpFiles.length>0){
-                    List<String> fileNames = Arrays.stream(ftpFiles).map(FTPFile::getName).collect(Collectors.toList());
-                    fileNames.forEach(k->{
-                        log.info("fileNames   "+k);
-                    });
-                    ftpClient.logout();
-                    if (fileNames.contains(fileName)) {
-                        log.info("contains ");
-                        flag = false;
-                        appendPage(page);
+            log.debug("appendPage");
+            if (ftpConfig.getFormat().equals("json")) {
+                for (int position = 0; position < page.getPositionCount(); position++) {
+                    HashMap<String, Object> columnMap = new HashMap<String, Object>();
+                    for (int channel = 0; channel < page.getChannelCount(); channel++) {
+                        columnMap.put(columns.get(channel), appendColumn(page, position, channel));
+                    }
+                    stringBuilder.append(JSON.toJSONString(columnMap));
+                    if (position != page.getPositionCount() - 1) {
+                        stringBuilder.append(ftpConfig.getColumnSeparator());
+                        stringBuilder.append(Constant.LINE_BREAK);
                     }
                 }
-                for (String column : columns) {
-                    stringBuilder.append(column);
-                    stringBuilder.append(",");
+                if (!fileIsExist && fileIsExist()) {
+                    ftpWrite(stringBuilder);
                 }
-                stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-                stringBuilder.append("\n");
+                else {
+                    ftpAppend(stringBuilder);
+                }
+            }
+            else {
                 for (int position = 0; position < page.getPositionCount(); position++) {
                     for (int channel = 0; channel < page.getChannelCount(); channel++) {
-                        String s = appendColumn(page, position, channel);
-                        stringBuilder.append(s);
+                        stringBuilder.append(appendColumn(page, position, channel));
                         if (channel != page.getChannelCount() - 1) {
-                            stringBuilder.append(",");
+                            stringBuilder.append(ftpConfig.getColumnSeparator());
                         }
                     }
                     if (position != page.getPositionCount() - 1) {
-                        stringBuilder.append("\n");
+                        stringBuilder.append(Constant.LINE_BREAK);
                     }
                 }
-                FtpWrite(stringBuilder);
-                flag = false;
-            }
-            else {
-                try {
-                    FTPClient ftpClient = FtpUtils.getFTPClient(ftpConfig);
-                    stringBuilder.append("\n");
-                    for (int position = 0; position < page.getPositionCount(); position++) {
-                        for (int channel = 0; channel < page.getChannelCount(); channel++) {
-                            String s = appendColumn(page, position, channel);
-                            stringBuilder.append(s);
-                            if (channel != page.getChannelCount() - 1) {
-                                stringBuilder.append(",");
-                            }
-                        }
-                        if (position != page.getPositionCount() - 1) {
-                            stringBuilder.append("\n");
-                        }
+                if (!fileIsExist && fileIsExist()) {
+                    StringBuilder columnNames = new StringBuilder();
+                    for (String column : columns) {
+                        columnNames.append(column);
+                        columnNames.append(ftpConfig.getColumnSeparator());
                     }
-                    OutputStream outputStream = ftpClient.appendFileStream(ftpConfig.getPath() + "/" + fileName);
-                    outputStream.write(stringBuilder.toString().getBytes());
-                    outputStream.flush();
-                    outputStream.close();
-                    ftpClient.logout();
+                    columnNames.deleteCharAt(stringBuilder.length() - 1);
+                    columnNames.append(Constant.LINE_BREAK);
+                    stringBuilder.insert(0, columnNames);
+                    ftpWrite(stringBuilder);
                 }
-                catch (Exception e) {
-                    log.error("appendPage :" + e.getMessage());
-                    throw new RuntimeException("appendPage " + e.getMessage());
+                else {
+                    ftpAppend(stringBuilder);
                 }
             }
         }
         catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            e.printStackTrace();
+            log.error(e, "appendPage is Exception");
+            throw new RuntimeException(e);
         }
         return NOT_BLOCKED;
     }
 
-    private String appendColumn(Page page, int position, int channel)
+    private Object appendColumn(Page page, int position, int channel)
     {
         Block block = page.getBlock(channel);
 
         Type type = types.get(channel);
         if (INTEGER.equals(type)) {
-            long aLong = type.getLong(block, position);
-            return String.valueOf(aLong);
+            return type.getLong(block, position);
         }
         else if (BOOLEAN.equals(type)) {
-            boolean aBoolean = type.getBoolean(block, position);
-            return String.valueOf(aBoolean);
+            return type.getBoolean(block, position);
         }
         else if (DOUBLE.equals(type)) {
-            double aDouble = type.getDouble(block, position);
-            return String.valueOf(aDouble);
+            return type.getDouble(block, position);
         }
         else if (type.getClass().getSuperclass().equals(DecimalType.class)) {
-            BigDecimal value = ((SqlDecimal) type.getObjectValue(null, block, position)).toBigDecimal();
-            return String.valueOf(value);
+            BigDecimal bigDecimal = ((SqlDecimal) type.getObjectValue(null, block, position)).toBigDecimal();
+            return bigDecimal;
         }
         else if (type.equals(VarcharType.VARCHAR)) {
             Slice slice = type.getSlice(block, position);
@@ -194,29 +177,51 @@ public class StoragePageSink implements ConnectorPageSink
     }
 
 
-    public FTPClient FtpWrite(StringBuilder stringBuilder)
+    public boolean fileIsExist()
     {
-        log.info("FtpWrite ");
-        if(!flag){
-            return null;
+        try {
+            fileName =
+                    ftpConfig.getTable() + Constant.UNDERLINE + ftpConfig.getNodeId() + Constant.POINT + ftpConfig.getSchema();
+            log.info("fileName is :" + fileName);
+            FTPClient ftpClient = FtpUtils.getFTPClient(ftpConfig);
+            FTPFile[] ftpFiles = ftpClient.listFiles(ftpConfig.getPath() + Constant.SEPARATOR + fileName);
+            if (ftpFiles != null && ftpFiles.length > 0) {
+                List<String> fileNames = Arrays.stream(ftpFiles).map(FTPFile::getName).collect(Collectors.toList());
+                ftpClient.logout();
+                if (fileNames.contains(fileName)) {
+                    fileIsExist = true;
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error(e, "fileIsExist is Exception");
+            throw new RuntimeException(e);
+        }
+        return false;
+    }
+
+    public void ftpWrite(StringBuilder stringBuilder)
+    {
+        if (!fileIsExist) {
+            return;
         }
         FTPClient ftpClient = FtpUtils.getFTPClient(ftpConfig);
         InputStream is = null;
         try {
-            int reply;
             //1.输入流
             is = new ByteArrayInputStream(stringBuilder.toString().getBytes());
             //2.指定写入的目录
             ftpClient.changeWorkingDirectory(ftpConfig.getPath());
             //3.写操作
             ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
-            fileName = new String(fileName.getBytes("utf-8"), "iso-8859-1");
+            fileName = new String(fileName.getBytes(Constant.JSON_ENCODING_UTF8), Constant.JSON_ENCODING_ISO);
             ftpClient.storeFile(fileName, is);
-            is.close();
             //退出
-            return ftpClient;
+            is.close();
         }
-        catch (Exception e) {
+        catch (IOException e) {
+            e.printStackTrace();
+            log.error(e, "FtpWrite is Exception");
             throw new RuntimeException(e);
         }
         finally {
@@ -228,6 +233,23 @@ public class StoragePageSink implements ConnectorPageSink
             catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    public void ftpAppend(StringBuilder stringBuilder)
+    {
+        try {
+            stringBuilder.append("\n");
+            FTPClient ftpClient = FtpUtils.getFTPClient(ftpConfig);
+            OutputStream outputStream = ftpClient.appendFileStream(ftpConfig.getPath() + "/" + fileName);
+            outputStream.write(stringBuilder.toString().getBytes());
+            outputStream.flush();
+            outputStream.close();
+            ftpClient.logout();
+        }
+        catch (IOException e) {
+            log.error(e, "ftpAppend is exception");
+            throw new RuntimeException("appendPage " + e.getMessage());
         }
     }
 }

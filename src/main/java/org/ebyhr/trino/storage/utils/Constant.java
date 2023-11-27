@@ -23,8 +23,19 @@ import static io.trino.spi.type.VarcharType.VARCHAR;
 
 public interface Constant
 {
-    public final String ARRAY_STRING_SPLITTER = "\001";
     public final String COMMA = ",";
+    public final String UNDERLINE = "_";
+    public final String POINT = ".";
+    public final String SEPARATOR = "/";
+
+    public final String LINE_BREAK = "\n";
+
+    static final String FTP = "FTP://";
+    static final String ftp = "ftp://";
+    static final String JSON_ENCODING_UTF8 = "UTF-8";
+    static final String JSON_ENCODING_ISO = "iso-8859-1";
+    public final String ARRAY_STRING_SPLITTER = "\001";
+
     public final String ROWKEY_SPLITER = "\001";
 
     public final int BATCHGET_SPLIT_RECORD_COUNT = 20;
@@ -36,9 +47,7 @@ public interface Constant
     public static final int DECIMAL_DEFAULT_PRECISION = 18;
     public static final int DECIMAL_DEFAULT_SCALE = 3;
 
-    public static final int SYSTEMOUT_INTERVAL = 40;
 
-    public static final String CONNECTOR_NAME = "hbase";
 
     enum CONDITION_OPER
     {
@@ -62,12 +71,11 @@ public interface Constant
     static final String JSON_TABLEMETA_COLUMNNAME = "columnName";
     static final String JSON_TABLEMETA_TYPE = "type";
 
-    static final String JSON_ENCODING_UTF8 = "UTF-8";
+
 
     static final String ROWKEY_TAIL = "|";
 
-    static final String FTP = "FTP://";
-    static final String ftp = "ftp://";
+
 
 
 }
