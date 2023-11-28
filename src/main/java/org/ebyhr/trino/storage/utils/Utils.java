@@ -19,6 +19,7 @@ import io.trino.connector.CatalogProperties;
 import io.trino.spi.type.ArrayType;
 import io.trino.spi.type.BigintType;
 import io.trino.spi.type.BooleanType;
+import io.trino.spi.type.DateType;
 import io.trino.spi.type.DecimalType;
 import io.trino.spi.type.DoubleType;
 import io.trino.spi.type.IntegerType;
@@ -27,7 +28,6 @@ import io.trino.spi.type.TimestampType;
 import io.trino.spi.type.Type;
 import io.trino.spi.type.VarcharType;
 import org.apache.commons.io.FileUtils;
-import org.ebyhr.trino.storage.StorageConfig;
 import org.ebyhr.trino.storage.catalog.CatalogMate;
 import org.ebyhr.trino.storage.dto.FtpConfig;
 
@@ -48,7 +48,7 @@ public class Utils
     public static final HashSet<String> FLIP_SYMBOL_TYPE = new HashSet<>(Arrays.asList(StandardTypes.BIGINT,
             StandardTypes.INTEGER, StandardTypes.TINYINT, StandardTypes.SMALLINT, StandardTypes.DOUBLE));
 
-    public static FtpConfig ftpAnalyze(String schemaName,String tableName)
+    public static FtpConfig ftpAnalyze(String schemaName, String tableName)
     {
 
         FtpConfig ftpConfig = new FtpConfig();
@@ -188,11 +188,12 @@ public class Utils
                 return BooleanType.BOOLEAN;
             case "array<string>":
                 return new ArrayType(VarcharType.VARCHAR);
+            case "date":
+                return DateType.DATE;
             case "timestamp":
             case "datetime":
                 return TimestampType.TIMESTAMP_MILLIS;
             case "decimal":
-                log.debug("set type   ===================decimal");
                 return DecimalType.createDecimalType(precision, scale);
             case "number":
                 return DecimalType.createDecimalType(Constant.DECIMAL_DEFAULT_PRECISION,

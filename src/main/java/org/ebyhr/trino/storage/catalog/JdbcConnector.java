@@ -3,7 +3,6 @@ package org.ebyhr.trino.storage.catalog;
 import io.airlift.log.Logger;
 import io.trino.connector.CatalogProperties;
 import org.ebyhr.trino.storage.StorageColumnHandle;
-import org.ebyhr.trino.storage.StorageConfig;
 import org.ebyhr.trino.storage.dto.FtpConfig;
 import org.ebyhr.trino.storage.utils.Utils;
 
@@ -40,8 +39,6 @@ public class JdbcConnector
                 int scale = rs.getInt("DECIMAL_DIGITS");
                 StorageColumnHandle storageColumnHandle = new StorageColumnHandle(columnName,
                         Utils.matchType(columnType, precision, scale));
-
-                log.info(columnName + " " + columnType + " " + precision + " " + scale);
                 storageColumnHandles.add(storageColumnHandle);
                 log.debug("storageColumnHandle :" + storageColumnHandle.toString());
             }

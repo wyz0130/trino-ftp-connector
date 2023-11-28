@@ -2,7 +2,6 @@ package org.ebyhr.trino.storage;
 
 
 import com.google.inject.Inject;
-
 import io.airlift.log.Logger;
 import io.airlift.node.NodeConfig;
 import io.trino.spi.connector.ConnectorInsertTableHandle;
@@ -36,7 +35,6 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
                                             ConnectorOutputTableHandle outputTableHandle,
                                             ConnectorPageSinkId pageSinkId)
     {
-        log.debug("2222222222");
         return new StoragePageSink(storageClient, null, null, null, null, null);
     }
 
@@ -45,7 +43,6 @@ public class StoragePageSinkProvider implements ConnectorPageSinkProvider
                                             ConnectorInsertTableHandle insertTableHandle,
                                             ConnectorPageSinkId pageSinkId)
     {
-        log.debug("11111111111");
         StorageInsertTableHandle storageInsertTableHandle = (StorageInsertTableHandle) insertTableHandle;
         FtpConfig ftpConfig = storageInsertTableHandle.getFtpConfig();
         log.debug("pageSinkId :" + pageSinkId.getId());

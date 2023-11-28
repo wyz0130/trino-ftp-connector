@@ -8,6 +8,7 @@ import io.airlift.slice.Slice;
 import io.trino.spi.Page;
 import io.trino.spi.block.Block;
 import io.trino.spi.connector.ConnectorPageSink;
+import io.trino.spi.type.DateType;
 import io.trino.spi.type.DecimalType;
 import io.trino.spi.type.SqlDate;
 import io.trino.spi.type.SqlDecimal;
@@ -25,7 +26,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -78,8 +82,9 @@ public class StoragePageSink implements ConnectorPageSink
     {
         StringBuilder stringBuilder = new StringBuilder();
         try {
-            log.debug("appendPage");
-            if (ftpConfig.getFormat().equals("json")) {
+            log.debug("ftpConfig :" + ftpConfig.toString());
+            log.debug("fileIsExist :" + fileIsExist);
+            if (ftpConfig.getSchema().equals("json")) {
                 for (int position = 0; position < page.getPositionCount(); position++) {
                     HashMap<String, Object> columnMap = new HashMap<String, Object>();
                     for (int channel = 0; channel < page.getChannelCount(); channel++) {
@@ -91,7 +96,7 @@ public class StoragePageSink implements ConnectorPageSink
                         stringBuilder.append(Constant.LINE_BREAK);
                     }
                 }
-                if (!fileIsExist && fileIsExist()) {
+                if (!fileIsExist && !fileIsExist()) {
                     ftpWrite(stringBuilder);
                 }
                 else {
@@ -110,13 +115,15 @@ public class StoragePageSink implements ConnectorPageSink
                         stringBuilder.append(Constant.LINE_BREAK);
                     }
                 }
-                if (!fileIsExist && fileIsExist()) {
+                if (!fileIsExist && !fileIsExist()) {
                     StringBuilder columnNames = new StringBuilder();
+                    log.debug("columns :" + columns.toString());
                     for (String column : columns) {
                         columnNames.append(column);
                         columnNames.append(ftpConfig.getColumnSeparator());
                     }
-                    columnNames.deleteCharAt(stringBuilder.length() - 1);
+                    log.debug("columnNames :" + columnNames.toString());
+                    columnNames.deleteCharAt(columnNames.length() - 1);
                     columnNames.append(Constant.LINE_BREAK);
                     stringBuilder.insert(0, columnNames);
                     ftpWrite(stringBuilder);
@@ -158,6 +165,14 @@ public class StoragePageSink implements ConnectorPageSink
         }
         else if (TimestampType.TIMESTAMP_MILLIS.equals(type)) {
             long aLong = type.getLong(block, position);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date(aLong / 1000));
+            calendar.add(Calendar.HOUR_OF_DAY, -8);
+            Timestamp timestamp = new Timestamp(calendar.getTimeInMillis());
+            return timestamp.toString();
+        }
+        else if (DateType.DATE.equals(type)) {
+            long aLong = type.getLong(block, position);
             return new SqlDate(Integer.parseInt(String.valueOf(aLong))).toString();
         }
         return null;
@@ -189,7 +204,8 @@ public class StoragePageSink implements ConnectorPageSink
                 List<String> fileNames = Arrays.stream(ftpFiles).map(FTPFile::getName).collect(Collectors.toList());
                 ftpClient.logout();
                 if (fileNames.contains(fileName)) {
-                    fileIsExist = true;
+                    this.fileIsExist = true;
+                    return true;
                 }
             }
         }
@@ -202,9 +218,6 @@ public class StoragePageSink implements ConnectorPageSink
 
     public void ftpWrite(StringBuilder stringBuilder)
     {
-        if (!fileIsExist) {
-            return;
-        }
         FTPClient ftpClient = FtpUtils.getFTPClient(ftpConfig);
         InputStream is = null;
         try {
